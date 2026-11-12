@@ -4,7 +4,12 @@ import { TransformControls } from 'three/examples/jsm/controls/TransformControls
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 import { ROOM, DESIGNS, defaultItems } from './room.js';
 
-let design = localStorage.getItem('cuarto3d-design');
+// Almacenamiento tolerante: en visores con iframe aislado localStorage lanza error.
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch { /* sin persistencia */ } },
+};
+let design = store.get('cuarto3d-design');
 if (!DESIGNS[design]) design = 'joaquin';
 const storeKey = () => (design === 'actual' ? 'cuarto3d-v2' : 'cuarto3d-v2-' + design);
 const $ = (id) => document.getElementById(id);
@@ -117,7 +122,7 @@ function rebuildOne(it) {
 }
 
 const getItem = (id) => items.find((i) => i.id === id);
-const save = () => localStorage.setItem(storeKey(), JSON.stringify(items));
+const save = () => store.set(storeKey(), JSON.stringify(items));
 function pushUndo() {
   undoStack.push(JSON.stringify(items));
   if (undoStack.length > 60) undoStack.shift();
@@ -307,8 +312,17 @@ $('bPersp').onclick = () => resetCamera(false);
 $('snap').onchange = () => setSnap($('snap').checked);
 $('autoHide').onchange = () => { autoHide = $('autoHide').checked; };
 document.querySelectorAll('[data-mode]').forEach((b) => { b.onclick = () => setMode(b.dataset.mode); });
+let resetArmed = 0;
 $('bReset').onclick = () => {
-  if (!confirm('¿Restablecer el cuarto al modelo original? Se perderán tus cambios.')) return;
+  // Confirmación con doble clic (los visores aislados bloquean confirm()).
+  if (Date.now() - resetArmed > 4000) {
+    resetArmed = Date.now();
+    $('bReset').textContent = '¿Seguro? Clic otra vez';
+    setTimeout(() => { $('bReset').textContent = 'Restablecer'; }, 4000);
+    return;
+  }
+  resetArmed = 0;
+  $('bReset').textContent = 'Restablecer';
   pushUndo();
   items = defaultItems(design);
   selectedId = null;
@@ -327,7 +341,7 @@ $('fImport').onchange = async (e) => {
     selectedId = null;
     rebuildAll();
     save();
-  } catch { alert('El archivo no es un JSON de cuarto válido.'); }
+  } catch { console.warn('JSON inválido'); $('hint').textContent = 'El archivo no es un JSON de cuarto válido.'; }
   e.target.value = '';
 };
 $('bGlb').onclick = () => {
@@ -375,14 +389,14 @@ function tick() {
 }
 
 function loadDesign() {
-  try { items = JSON.parse(localStorage.getItem(storeKey())) || defaultItems(design); } catch { items = defaultItems(design); }
+  try { items = JSON.parse(store.get(storeKey())) || defaultItems(design); } catch { items = defaultItems(design); }
 }
 const dSel = $('design');
 for (const [k, label] of Object.entries(DESIGNS)) dSel.add(new Option(label, k));
 dSel.value = design;
 dSel.onchange = () => {
   design = dSel.value;
-  localStorage.setItem('cuarto3d-design', design);
+  store.set('cuarto3d-design', design);
   undoStack.length = 0;
   selectedId = null;
   loadDesign();
