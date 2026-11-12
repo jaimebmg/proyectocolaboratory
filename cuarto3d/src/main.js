@@ -2,9 +2,11 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
-import { ROOM, defaultItems } from './room.js';
+import { ROOM, DESIGNS, defaultItems } from './room.js';
 
-const STORE = 'cuarto3d-v2';
+let design = localStorage.getItem('cuarto3d-design');
+if (!DESIGNS[design]) design = 'joaquin';
+const storeKey = () => (design === 'actual' ? 'cuarto3d-v2' : 'cuarto3d-v2-' + design);
 const $ = (id) => document.getElementById(id);
 const view = $('view');
 
@@ -115,7 +117,7 @@ function rebuildOne(it) {
 }
 
 const getItem = (id) => items.find((i) => i.id === id);
-const save = () => localStorage.setItem(STORE, JSON.stringify(items));
+const save = () => localStorage.setItem(storeKey(), JSON.stringify(items));
 function pushUndo() {
   undoStack.push(JSON.stringify(items));
   if (undoStack.length > 60) undoStack.shift();
@@ -308,12 +310,12 @@ document.querySelectorAll('[data-mode]').forEach((b) => { b.onclick = () => setM
 $('bReset').onclick = () => {
   if (!confirm('¿Restablecer el cuarto al modelo original? Se perderán tus cambios.')) return;
   pushUndo();
-  items = defaultItems();
+  items = defaultItems(design);
   selectedId = null;
   rebuildAll();
   save();
 };
-$('bJson').onclick = () => download('cuarto.json', JSON.stringify(items, null, 1), 'application/json');
+$('bJson').onclick = () => download(`cuarto-${design}.json`, JSON.stringify(items, null, 1), 'application/json');
 $('fImport').onchange = async (e) => {
   const f = e.target.files[0];
   if (!f) return;
@@ -333,7 +335,7 @@ $('bGlb').onclick = () => {
   root.children.forEach((g) => { if (!g.visible && getItem(g.userData.itemId)?.visible !== false) { g.visible = true; hidden.push(g); } });
   new GLTFExporter().parse(root, (buf) => {
     hidden.forEach((g) => { g.visible = false; });
-    download('cuarto.glb', buf, 'model/gltf-binary');
+    download(`cuarto-${design}.glb`, buf, 'model/gltf-binary');
   }, (err) => alert('No se pudo exportar: ' + err), { binary: true, onlyVisible: true });
 };
 
@@ -372,7 +374,21 @@ function tick() {
   requestAnimationFrame(tick);
 }
 
-try { items = JSON.parse(localStorage.getItem(STORE)) || defaultItems(); } catch { items = defaultItems(); }
+function loadDesign() {
+  try { items = JSON.parse(localStorage.getItem(storeKey())) || defaultItems(design); } catch { items = defaultItems(design); }
+}
+const dSel = $('design');
+for (const [k, label] of Object.entries(DESIGNS)) dSel.add(new Option(label, k));
+dSel.value = design;
+dSel.onchange = () => {
+  design = dSel.value;
+  localStorage.setItem('cuarto3d-design', design);
+  undoStack.length = 0;
+  selectedId = null;
+  loadDesign();
+  rebuildAll();
+};
+loadDesign();
 resize();
 resetCamera();
 setMode('translate');

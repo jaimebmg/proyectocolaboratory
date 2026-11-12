@@ -70,7 +70,10 @@ const T = 0.08; // grosor de muros
 const sill = 0.86, head = 2.12; // antepecho y dintel de la ventana
 const winW = 1.0; // tramo de ventana sobre el muro oeste (desde la esquina)
 
-export function defaultItems() {
+export const DESIGNS = { joaquin: 'Habitación de Joaquín (Montessori)', actual: 'Cuarto actual (oficina + cuna)' };
+
+export function defaultItems(design = 'actual') {
+  const kid = design === 'joaquin';
   n = 0;
   const items = [];
 
@@ -126,6 +129,7 @@ export function defaultItems() {
   cl.push(box([0.06, 0.05, closetLen], [0, 2.26, 0], C.lightGrey));
   items.push(item('Clóset (puertas corredizas)', [W, 0, closetLen / 2], cl));
 
+  if (!kid) {
   // ---------- escritorio ----------
   const deskL = 2.52, deskD = 0.66, deskY = 0.74;
   items.push(item('Escritorio', [deskL / 2, 0, deskD / 2 + 0.02], [
@@ -192,6 +196,8 @@ export function defaultItems() {
     cyl(0.08, 0.09, [0.3, 0.045, -0.02], C.grey),
   ]));
 
+  }
+
   // ---------- persianas ----------
   const rb = [box([1.72, 0.1, 0.07], [0, 2.17, 0], C.blind)];
   for (let i = 0; i < 7; i++) {
@@ -217,6 +223,7 @@ export function defaultItems() {
   tro.push(box([0.26, 0.05, 0.2], [-0.03, 1.035, 0], '#d9d4c6'));
   items.push(item('Estante con canastas azules', [W - 0.24, 0, 0.3], tro));
 
+  if (!kid) {
   // ---------- sillas ----------
   items.push(item('Silla negra', [2.0, 0, 1.12], chair(C.black, '#4a4d52'), { rotY: 0.25 }));
   items.push(item('Silla gris', [0.5, 0, 1.05], chair('#b9bcbf', C.black), { rotY: -0.5 }));
@@ -268,6 +275,10 @@ export function defaultItems() {
     cyl(0.14, 0.04, [0.2, 0.07, 0.25], C.black, { rot: [0, 0, Math.PI / 2] }),
     box([0.02, 0.4, 0.02], [-0.2, 0.25, 0], C.black), box([0.02, 0.4, 0.02], [0.2, 0.25, 0], C.black),
   ], { rotY: 0.4 }));
+
+  }
+
+  if (kid) joaquinItems(items);
 
   // ---------- repisas ----------
   const toys = ['#4c79c9', '#b08a5c', '#e9e9ee', '#9aa0a8', '#6cc24a', '#e2574c', '#f2c94c'];
@@ -321,4 +332,93 @@ export function defaultItems() {
   ], { hideFrom: [-1, 0] }));
 
   return items;
+}
+
+// ---------- diseño: habitación de Joaquín (Montessori) ----------
+function joaquinItems(items) {
+  const wood = '#dcbf93', woodDark = '#c9a877';
+
+  // Cama casita a ras de piso, en la misma esquina donde estaba la cama con cuna
+  const L = 1.9, Wd = 1.0, eave = 1.05, ridge = 1.5, hz = Wd / 2 - 0.025, hx = L / 2 - 0.025;
+  const rl = Math.hypot(hz, ridge - eave), ra = Math.atan2(ridge - eave, hz);
+  const bed = [
+    box([L, 0.08, Wd], [0, 0.06, 0], wood),
+    box([L - 0.1, 0.12, Wd - 0.1], [0, 0.16, 0], C.bedGreen),
+    box([0.4, 0.08, 0.6], [-L / 2 + 0.3, 0.26, 0], '#ffffff'),
+    box([L, 0.05, 0.05], [0, eave, -hz], wood), box([L, 0.05, 0.05], [0, eave, hz], wood),
+    box([L, 0.05, 0.05], [0, ridge, 0], wood),
+    box([0.03, 0.3, Wd - 0.1], [-hx, 0.37, 0], wood),
+    box([0.9, 0.05, 0.03], [-L / 2 + 0.47, 0.44, -hz], wood),
+  ];
+  for (const x of [-hx, hx]) {
+    for (const z of [-hz, hz]) bed.push(box([0.05, eave, 0.05], [x, eave / 2, z], wood));
+    bed.push(box([0.05, 0.05, rl], [x, (eave + ridge) / 2, hz / 2], wood, { rot: [ra, 0, 0] }));
+    bed.push(box([0.05, 0.05, rl], [x, (eave + ridge) / 2, -hz / 2], wood, { rot: [-ra, 0, 0] }));
+  }
+  for (let i = 1; i < 6; i++) bed.push(box([0.03, 0.22, 0.02], [-L / 2 + 0.03 + i * 0.15, 0.31, -hz], wood));
+  for (let i = 0; i < 18; i++) bed.push(cyl(0.09, 0.004, [-L / 2 + 0.7 + ((i * 0.37) % 1.05), 0.222, -0.38 + ((i * 0.23) % 0.76)], C.spot));
+  items.push(item('Cama Montessori (casita)', [L / 2 + 0.03, 0, D - Wd / 2 - 0.01], bed));
+  items.push(item('Peluches en la cama', [0.75, 0.22, D - 0.3], [
+    sph(0.26, [0, 0.13, 0], '#8fd3cf'), sph(0.16, [0, 0.31, 0], '#8fd3cf'),
+    sph(0.22, [0.3, 0.11, 0.02], '#4c79c9'), sph(0.14, [0.3, 0.26, 0.02], '#4c79c9'),
+    sph(0.2, [0.56, 0.1, 0], '#d8433a'), sph(0.13, [0.56, 0.24, 0], '#d8433a'),
+  ]));
+
+  // Zona de juego
+  items.push(item('Tapete de juego', [1.55, 0, 1.15], [
+    cyl(1.6, 0.012, [0, 0.006, 0], '#f1e6cf'), cyl(1.2, 0.014, [0, 0.007, 0], '#bfe3c4'),
+  ]));
+  const chairKid = (x, z, rot) => items.push(item('Sillita', [x, 0, z], [
+    box([0.28, 0.03, 0.28], [0, 0.26, 0], wood),
+    box([0.28, 0.24, 0.025], [0, 0.42, 0.13], wood),
+    ...[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([a, b]) => box([0.03, 0.26, 0.03], [a * 0.12, 0.13, b * 0.12], woodDark)),
+  ], { rotY: rot }));
+  items.push(item('Mesita de actividades', [1.25, 0, 1.0], [
+    box([0.6, 0.03, 0.5], [0, 0.445, 0], '#ffffff'),
+    ...[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([a, b]) => box([0.04, 0.43, 0.04], [a * 0.26, 0.215, b * 0.21], wood)),
+    box([0.21, 0.004, 0.15], [-0.1, 0.462, 0], '#fff7d6', { rot: [0, 0.2, 0] }),
+    cyl(0.07, 0.08, [0.18, 0.5, -0.12], '#e2574c'),
+  ]));
+  chairKid(1.25, 1.42, 0);
+  chairKid(0.8, 1.0, -Math.PI / 2);
+
+  // Rincón de lectura junto a la pared de las fotos
+  const rack = [box([0.02, 0.75, 0.8], [-0.07, 0.375, 0], wood), box([0.16, 0.75, 0.02], [0, 0.375, -0.4], wood), box([0.16, 0.75, 0.02], [0, 0.375, 0.4], wood)];
+  const bookCols = ['#e2574c', '#4c79c9', '#f2c94c', '#6cc24a', '#f08a3c', '#9b6fd0'];
+  [0.06, 0.3, 0.54].forEach((y, r) => {
+    rack.push(box([0.14, 0.02, 0.78], [0, y, 0], wood), box([0.015, 0.07, 0.78], [0.07, y + 0.035, 0], wood));
+    for (let i = 0; i < 4; i++) rack.push(box([0.02, 0.2, 0.16], [0.02 + (i % 2) * 0.02, y + 0.11, -0.28 + i * 0.19], bookCols[(r * 4 + i) % 6], { rot: [0, 0, -0.12] }));
+  });
+  items.push(item('Librero frontal', [0.09, 0, 1.45], rack));
+  items.push(item('Puf de lectura', [0.5, 0, 0.5], [
+    box([0.7, 0.3, 0.7], [0, 0.15, 0], '#7fb7d9'), sph(0.34, [-0.12, 0.38, -0.12], '#f2c94c'),
+  ]));
+  items.push(item('Lámpara de noche', [0.2, 0, 1.0], [
+    cyl(0.12, 0.03, [0, 0.015, 0], woodDark), cyl(0.02, 0.5, [0, 0.28, 0], woodDark), sph(0.2, [0, 0.6, 0], '#fff2c2'),
+  ]));
+
+  // Repisa baja de juguetes (junto al estante de canastas que ya existía)
+  const low = [
+    box([0.9, 0.02, 0.3], [0, 0.44, 0], wood), box([0.9, 0.02, 0.3], [0, 0.22, 0], wood), box([0.9, 0.03, 0.3], [0, 0.015, 0], wood),
+    box([0.02, 0.45, 0.3], [-0.44, 0.225, 0], wood), box([0.02, 0.45, 0.3], [0.44, 0.225, 0], wood), box([0.02, 0.45, 0.3], [0, 0.225, 0], wood),
+    box([0.9, 0.45, 0.01], [0, 0.225, -0.145], wood),
+    box([0.3, 0.14, 0.22], [-0.22, 0.1, 0.02], '#e9c93b'), sph(0.16, [0.22, 0.11, 0], '#e2574c'),
+    box([0.12, 0.12, 0.12], [-0.3, 0.29, 0], '#4c79c9'), box([0.12, 0.12, 0.12], [-0.14, 0.29, 0.02], '#6cc24a'),
+    cyl(0.1, 0.16, [0.14, 0.31, 0], '#f08a3c'), cyl(0.1, 0.12, [0.3, 0.29, 0], '#9b6fd0'),
+    box([0.25, 0.1, 0.12], [-0.2, 0.5, 0], '#d8433a'), sph(0.14, [0.22, 0.52, 0], '#8fd3cf'),
+  ];
+  items.push(item('Repisa baja de juguetes', [1.6, 0, 0.19], low));
+  const tro2 = [
+    box([0.02, 0.94, 0.44], [-0.21, 0.47, 0], C.white), box([0.02, 0.94, 0.44], [0.21, 0.47, 0], C.white),
+    box([0.44, 0.02, 0.44], [0, 0.93, 0], C.white), box([0.44, 0.04, 0.44], [0, 0.02, 0], C.white),
+    box([0.44, 0.94, 0.01], [0, 0.47, -0.215], C.white),
+    ...[0, 1, 2].map((i) => box([0.38, 0.22, 0.42], [0, 0.18 + i * 0.27, 0.01], ['#bfe3c4', '#f2c94c', C.blue][i])),
+  ];
+  items.push(item('Estante con canastas 2', [W - 0.7, 0, 0.3], tro2));
+
+  // Percha a la altura del niño
+  items.push(item('Percha baja (ropa de Joaquín)', [0.012, 0.95, 1.05], [
+    box([0.02, 0.08, 0.5], [0, 0, 0], wood),
+    ...[-0.18, 0, 0.18].map((z) => cyl(0.025, 0.06, [0.035, 0, z], woodDark, { rot: [0, 0, Math.PI / 2] })),
+  ], { hideFrom: [-1, 0] }));
 }

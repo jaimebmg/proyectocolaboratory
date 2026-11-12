@@ -15,6 +15,7 @@
   .grp { display: flex; background: #fff; border-radius: 8px; box-shadow: 0 1px 4px #0002; overflow: hidden; }
   button, .file { border: 0; background: #fff; padding: 7px 10px; cursor: pointer; font: inherit; color: inherit; }
   button:hover, .file:hover { background: #eef2f6; }
+  select { border: 0; background: #fff; padding: 7px 8px; font: inherit; font-weight: 600; color: inherit; cursor: pointer; }
   button.on { background: #1f6feb; color: #fff; }
   aside { width: 290px; background: #fff; border-left: 1px solid #d5dbe1; display: flex; flex-direction: column; }
   aside h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: #52606d; margin: 0; padding: 10px 12px 6px; }
@@ -43,6 +44,7 @@
 <div id="app">
   <div id="view">
     <div id="bar">
+      <div class="grp"><select id="design" title="Diseño"></select></div>
       <div class="grp">
         <button data-mode="translate" title="W">Mover</button>
         <button data-mode="rotate" title="E">Rotar</button>
