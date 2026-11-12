@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cuarto 3D editable</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; font: 13px/1.35 system-ui, sans-serif; color: #1f2933; background: #e9edf0; }
+  #app { display: flex; height: 100%; }
+  #view { flex: 1; min-width: 0; position: relative; }
+  #view canvas { display: block; touch-action: none; }
+  #bar { position: absolute; top: 10px; left: 10px; display: flex; flex-wrap: wrap; gap: 6px; z-index: 2; max-width: calc(100% - 20px); }
+  #hint { position: absolute; bottom: 8px; left: 10px; color: #52606d; font-size: 12px; pointer-events: none; }
+  .grp { display: flex; background: #fff; border-radius: 8px; box-shadow: 0 1px 4px #0002; overflow: hidden; }
+  button, .file { border: 0; background: #fff; padding: 7px 10px; cursor: pointer; font: inherit; color: inherit; }
+  button:hover, .file:hover { background: #eef2f6; }
+  button.on { background: #1f6feb; color: #fff; }
+  aside { width: 290px; background: #fff; border-left: 1px solid #d5dbe1; display: flex; flex-direction: column; }
+  aside h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: #52606d; margin: 0; padding: 10px 12px 6px; }
+  #list { list-style: none; margin: 0; padding: 0 6px; overflow: auto; flex: 1; min-height: 80px; }
+  #list li { padding: 4px 8px; border-radius: 5px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #list li:hover { background: #eef2f6; }
+  #list li.sel { background: #1f6feb; color: #fff; }
+  #list li.hid { opacity: .45; text-decoration: line-through; }
+  #panel { border-top: 1px solid #d5dbe1; padding: 4px 12px 12px; }
+  #panel h2 { padding-left: 0; }
+  .row { display: flex; gap: 6px; align-items: center; margin: 5px 0; }
+  .row > span { width: 62px; color: #52606d; flex: none; }
+  .row input[type=number], .row input[type=text] { flex: 1; min-width: 0; width: 0; padding: 4px 5px; border: 1px solid #c8d0d8; border-radius: 5px; font: inherit; }
+  #colors { display: flex; flex-wrap: wrap; gap: 4px; }
+  #colors input { width: 30px; height: 26px; padding: 0; border: 1px solid #c8d0d8; border-radius: 4px; background: none; }
+  #dims { color: #52606d; font-size: 12px; margin: 4px 0; }
+  .acts { display: flex; gap: 6px; margin-top: 8px; }
+  .acts button { flex: 1; border: 1px solid #c8d0d8; border-radius: 6px; }
+  #bDel { color: #c0392b; }
+  .opts { padding: 6px 12px; border-top: 1px solid #d5dbe1; display: grid; gap: 3px; }
+  #noSel { color: #52606d; padding: 4px 0 8px; }
+  @media (max-width: 720px) { #app { flex-direction: column; } aside { width: 100%; height: 45%; border-left: 0; border-top: 1px solid #d5dbe1; } #hint { display: none; } }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="view">
+    <div id="bar">
+      <div class="grp">
+        <button data-mode="translate" title="W">Mover</button>
+        <button data-mode="rotate" title="E">Rotar</button>
+        <button data-mode="scale" title="R">Escalar</button>
+      </div>
+      <div class="grp">
+        <button id="bAddBox">+ Caja</button><button id="bAddCyl">+ Cilindro</button><button id="bAddSph">+ Esfera</button>
+      </div>
+      <div class="grp"><button id="bUndo" title="Ctrl+Z">Deshacer</button></div>
+      <div class="grp"><button id="bPersp">Vista 3D</button><button id="bTop">Planta</button></div>
+      <div class="grp">
+        <button id="bJson">Guardar JSON</button>
+        <label class="file">Abrir JSON<input id="fImport" type="file" accept=".json,application/json" hidden></label>
+        <button id="bGlb">Exportar GLB</button>
+        <button id="bReset">Restablecer</button>
+      </div>
+    </div>
+    <div id="hint">Clic: seleccionar · Arrastrar: girar la vista · Rueda: zoom · Clic derecho: desplazar · W/E/R: mover/rotar/escalar · Supr: eliminar</div>
+  </div>
+  <aside>
+    <h2>Objetos</h2>
+    <ul id="list"></ul>
+    <div class="opts">
+      <label><input type="checkbox" id="snap" checked> Ajuste a 5 cm / 15°</label>
+      <label><input type="checkbox" id="autoHide" checked> Ocultar muros que tapan la vista</label>
+      <label><input type="checkbox" id="lockStruct" checked> No seleccionar muros/piso con clic</label>
+    </div>
+    <div id="panel">
+      <h2>Propiedades</h2>
+      <div id="noSel">Selecciona un objeto en la vista o en la lista.</div>
+      <div id="props" hidden>
+        <div class="row"><span>Nombre</span><input id="pName" type="text"></div>
+        <div class="row"><span>Posición</span><input id="px" type="number" step="0.05"><input id="py" type="number" step="0.05"><input id="pz" type="number" step="0.05"></div>
+        <div class="row"><span>Giro (°)</span><input id="pRot" type="number" step="15"></div>
+        <div class="row"><span>Escala</span><input id="sx" type="number" step="0.05"><input id="sy" type="number" step="0.05"><input id="sz" type="number" step="0.05"></div>
+        <div id="dims"></div>
+        <div class="row"><span>Colores</span><div id="colors"></div></div>
+        <label><input type="checkbox" id="pVis"> Visible</label>
+        <div class="acts"><button id="bDup">Duplicar</button><button id="bDel">Eliminar</button></div>
+      </div>
+    </div>
+  </aside>
+</div>
+<script>/*BUNDLE*/</script>
+</body>
+</html>
