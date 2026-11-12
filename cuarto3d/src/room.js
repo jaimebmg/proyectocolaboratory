@@ -70,10 +70,11 @@ const T = 0.08; // grosor de muros
 const sill = 0.86, head = 2.12; // antepecho y dintel de la ventana
 const winW = 1.0; // tramo de ventana sobre el muro oeste (desde la esquina)
 
-export const DESIGNS = { joaquin: 'Habitación de Joaquín (Montessori)', actual: 'Cuarto actual (oficina + cuna)' };
+export const DESIGNS = { joaquin: 'Habitación de Joaquín (Montessori)', actual: 'Cuarto actual (oficina + cuna)', ordenado: 'Cuarto actual con escritorio organizado' };
 
 export function defaultItems(design = 'actual') {
   const kid = design === 'joaquin';
+  const tidy = design === 'ordenado';
   n = 0;
   const items = [];
 
@@ -160,7 +161,7 @@ export function defaultItems(design = 'actual') {
     box([0.035, 0.2, 0.035], [0, 0.1, -0.03], C.black),
     box([0.55, 0.33, 0.03], [0, 0.34, 0], C.black),
     box([0.53, 0.31, 0.005], [0, 0.34, 0.018], '#2b2d33'),
-  ], { rotY: -0.5 }));
+  ], { rotY: tidy ? -0.3 : -0.5 }));
   items.push(item('Tablet en brazo', [2.3, deskY, 0.1], [
     cyl(0.02, 0.62, [0, 0.31, 0], C.lightGrey),
     box([0.27, 0.18, 0.015], [0, 0.72, 0.03], C.black, { rot: [-0.25, 0, 0] }),
@@ -170,7 +171,7 @@ export function defaultItems(design = 'actual') {
     box([0.42, 0.01, 0.11], [0, 0.03, -0.005], '#3d3f45'),
   ]));
   items.push(item('Mouse', [2.22, deskY, 0.52], [box([0.065, 0.035, 0.11], [0, 0.0175, 0], C.black)]));
-  items.push(item('Botella morada', [2.3, deskY, 0.47], [
+  items.push(item('Botella morada', tidy ? [1.5, deskY, 0.55] : [2.3, deskY, 0.47], [
     cyl(0.07, 0.2, [0, 0.1, 0], C.purple), cyl(0.05, 0.04, [0, 0.22, 0], C.grey),
   ]));
   items.push(item('Laptop en soporte', [1.5, deskY, 0.25], [
@@ -186,6 +187,24 @@ export function defaultItems(design = 'actual') {
     box([0.16, 0.05, 0.2], [0, 0.025, 0], C.black),
     box([0.05, 0.04, 0.2], [-0.05, 0.065, 0], '#2a2a2c'),
   ]));
+  if (tidy) {
+    items.push(item('Portarretratos alineados', [0.42, deskY, 0.12], [
+      ...[-0.24, 0, 0.24].flatMap((x, i) => [
+        box([0.16, 0.21, 0.015], [x, 0.105, 0], [C.white, C.lightGrey, C.white][i], { rot: [-0.15, 0, 0] }),
+        box([0.11, 0.15, 0.017], [x, 0.105, 0.002], '#e7d3c0', { rot: [-0.15, 0, 0] }),
+      ]),
+    ]));
+    items.push(item('Bandeja de documentos', [0.2, deskY, 0.45], [
+      box([0.25, 0.012, 0.33], [0, 0.006, 0], C.black), box([0.23, 0.02, 0.31], [0, 0.022, 0], '#ffffff'),
+      box([0.25, 0.012, 0.33], [0, 0.075, 0], C.black), box([0.23, 0.015, 0.31], [0, 0.088, 0], '#f3f6f1'),
+      ...[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([a, b]) => box([0.012, 0.07, 0.012], [a * 0.118, 0.04, b * 0.158], C.black)),
+    ]));
+    items.push(item('Portalápices', [0.82, deskY, 0.14], [
+      cyl(0.08, 0.1, [0, 0.05, 0], '#e9c93b'),
+      cyl(0.008, 0.16, [0.01, 0.1, 0], '#4c79c9', { rot: [0.15, 0, 0.1] }), cyl(0.008, 0.16, [-0.015, 0.1, 0.01], '#e2574c', { rot: [-0.1, 0, -0.15] }),
+    ]));
+    items.push(item('Caja organizadora de cables', [2.05, 0, 0.14], [box([0.4, 0.14, 0.16], [0, 0.07, 0], C.white)]));
+  } else
   items.push(item('Portarretratos y papeles', [0.4, deskY, 0.25], [
     box([0.22, 0.26, 0.015], [0.2, 0.2, -0.12], C.white, { rot: [-0.5, 0, 0] }),
     box([0.2, 0.22, 0.015], [-0.08, 0.2, -0.14], C.lightGrey, { rot: [-0.5, 0, 0] }),
@@ -225,8 +244,8 @@ export function defaultItems(design = 'actual') {
 
   if (!kid) {
   // ---------- sillas ----------
-  items.push(item('Silla negra', [2.0, 0, 1.12], chair(C.black, '#4a4d52'), { rotY: 0.25 }));
-  items.push(item('Silla gris', [0.5, 0, 1.05], chair('#b9bcbf', C.black), { rotY: -0.5 }));
+  items.push(item('Silla negra', tidy ? [1.95, 0, 0.92] : [2.0, 0, 1.12], chair(C.black, '#4a4d52'), { rotY: tidy ? 0 : 0.25 }));
+  items.push(item('Silla gris', tidy ? [0.42, 0, 0.92] : [0.5, 0, 1.05], chair('#b9bcbf', C.black), { rotY: tidy ? 0 : -0.5 }));
 
   // ---------- cama + cuna ----------
   const bedL = 1.95, bedW = 1.0, by = D - bedW / 2;

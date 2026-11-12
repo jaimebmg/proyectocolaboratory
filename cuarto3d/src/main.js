@@ -409,4 +409,4 @@ setMode('translate');
 setSnap(true);
 rebuildAll();
 tick();
-window.__cuarto = { get items() { return items; }, select };
+window.__cuarto = { get items() { return items; }, select, camera, orbit };
