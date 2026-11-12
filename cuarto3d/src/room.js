@@ -92,26 +92,26 @@ export function defaultItems() {
     box([T, H, D - winW - 0.9], [-T / 2, H / 2, D / 2 - (D - winW - 0.9) / 2], C.green),
   ], { structure: true, hideFrom: [-1, 0] }));
 
-  items.push(item('Muro sur (verde)', [W / 2, 0, D], [
-    box([W, H, T], [0, H / 2, T / 2], C.green),
+  // Muro sur: verde, con el vano de la puerta en el extremo este (a los pies de la cama)
+  const doorW = 0.82, doorH = 2.05, doorX0 = W - doorW - 0.05; // el vano va de doorX0 a W - 0.05
+  items.push(item('Muro sur (verde, con puerta)', [W / 2, 0, D], [
+    box([doorX0, H, T], [-W / 2 + doorX0 / 2, H / 2, T / 2], C.green),
+    box([W - doorX0, H - doorH, T], [W / 2 - (W - doorX0) / 2, (H + doorH) / 2, T / 2], C.wall),
+    box([0.05, doorH, T], [W / 2 - 0.025, doorH / 2, T / 2], C.wall),
   ], { structure: true, hideFrom: [0, 1] }));
 
-  // Muro este: fondo del clóset + tramo de la puerta
-  const closetLen = 2.0, doorW = 0.82, doorH = 2.05;
-  items.push(item('Muro este (fondo clóset)', [W + 0.62, 0, closetLen / 2], [
-    box([T, H, closetLen + T], [T / 2, H / 2, 0], C.wall),
-  ], { structure: true, hideFrom: [1, 0] }));
-  items.push(item('Muro de la puerta', [W, 0, closetLen + (D - closetLen) / 2], [
-    box([T, H - doorH, D - closetLen], [T / 2, (H + doorH) / 2, 0], C.wall),
-    box([T, doorH, D - closetLen - doorW - 0.02], [T / 2, doorH / 2, (D - closetLen) / 2 - (D - closetLen - doorW - 0.02) / 2], C.wall),
-    box([0.62, H, T], [0.31, H / 2, -(D - closetLen) / 2 + T / 2], C.wall),
+  // Muro este: fondo del clóset, que ocupa toda la pared
+  const closetLen = D;
+  items.push(item('Muro este (fondo clóset)', [W + 0.62, 0, D / 2], [
+    box([T, H, D + T], [T / 2, H / 2, 0], C.wall),
   ], { structure: true, hideFrom: [1, 0] }));
 
-  items.push(item('Puerta (abierta)', [W - doorW / 2 + 0.02, 0, closetLen + 0.06], [
+  // Puerta abierta 90° hacia adentro, paralela al frente del clóset
+  items.push(item('Puerta (abierta)', [W - 0.08, 0, D - doorW / 2], [
     box([doorW, doorH, 0.04], [0, doorH / 2, 0], C.doorWood),
-    cyl(0.03, 0.12, [-doorW / 2 + 0.08, 1.0, 0.06], C.steel, { rot: [0, 0, Math.PI / 2] }),
-    box([0.22, 0.07, 0.01], [0, 1.5, 0.025], '#e9a23b'),
-  ]));
+    cyl(0.03, 0.12, [doorW / 2 - 0.08, 1.0, -0.06], C.steel, { rot: [0, 0, Math.PI / 2] }),
+    box([0.22, 0.07, 0.01], [0, 1.5, -0.025], '#e9a23b'),
+  ], { rotY: Math.PI / 2 }));
 
   // ---------- clóset ----------
   const cl = [box([0.6, H - 0.08, closetLen], [0.31, (H - 0.08) / 2, 0], C.white)];
@@ -259,7 +259,7 @@ export function defaultItems() {
   items.push(item('Laptop sobre la cama', [1.4, 0.52, by - 0.15], [
     box([0.36, 0.02, 0.25], [0, 0.02, 0], '#4b4f55', { rot: [0, 0.5, 0.05] }),
   ]));
-  items.push(item('Coche de bebé', [2.3, 0, 2.55], [
+  items.push(item('Coche de bebé', [2.25, 0, 2.4], [
     box([0.42, 0.5, 0.5], [0, 0.6, 0], '#2b3550'),
     box([0.42, 0.3, 0.3], [0, 0.95, 0.12], '#2b3550', { rot: [0.4, 0, 0] }),
     cyl(0.14, 0.04, [-0.2, 0.07, -0.25], C.black, { rot: [0, 0, Math.PI / 2] }),
@@ -276,7 +276,7 @@ export function defaultItems() {
     ...plushies(5, 0.9, 0.02, ['#9aa0a8', '#4c79c9', '#b08a5c', '#f3f3f3', '#8fbf5a']),
   ], { hideFrom: [0, 1] }));
   [1.15, 1.5, 1.83].forEach((y, i) => {
-    items.push(item(`Repisa pequeña ${i + 1} (sur)`, [2.35, y, D - 0.1], [
+    items.push(item(`Repisa pequeña ${i + 1} (sur)`, [1.8, y, D - 0.1], [
       box([0.62, 0.03, 0.2], [0, 0, 0], C.shelf),
       ...plushies(3, 0.55, 0.015, toys.slice(i * 2).concat(toys)),
     ], { hideFrom: [0, 1] }));
@@ -288,7 +288,7 @@ export function defaultItems() {
   ], { hideFrom: [-1, 0] }));
 
   // ---------- decoración de muros ----------
-  items.push(item('Vinilo: rama y monos', [1.25, 1.15, D - 0.012], [
+  items.push(item('Vinilo: rama y monos', [0.8, 1.2, D - 0.012], [
     box([1.3, 0.05, 0.006], [0, 0.12, 0], '#4a3f3a', { rot: [0, 0, 0.12] }),
     ...[-0.45, 0.0, 0.42].flatMap((x, i) => [
       cyl(0.2, 0.006, [x, -0.02 + i * 0.07, 0], C.brown, { rot: [Math.PI / 2, 0, 0] }),
@@ -296,7 +296,7 @@ export function defaultItems() {
     ]),
     ...[-0.6, -0.2, 0.25, 0.6].map((x, i) => box([0.1, 0.05, 0.006], [x, 0.22 + i * 0.03, 0], i % 2 ? '#8ccf5a' : '#2f9e6a', { rot: [0, 0, 0.6] })),
   ], { hideFrom: [0, 1] }));
-  items.push(item('Vinilo: búho', [1.95, 0.85, D - 0.012], [
+  items.push(item('Vinilo: búho', [1.3, 0.85, D - 0.012], [
     cyl(0.3, 0.006, [0, 0, 0], '#f2d23c', { rot: [Math.PI / 2, 0, 0] }),
     cyl(0.09, 0.008, [-0.06, 0.04, -0.002], '#ffffff', { rot: [Math.PI / 2, 0, 0] }),
     cyl(0.09, 0.008, [0.06, 0.04, -0.002], '#ffffff', { rot: [Math.PI / 2, 0, 0] }),

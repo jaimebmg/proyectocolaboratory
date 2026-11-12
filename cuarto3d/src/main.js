@@ -4,7 +4,7 @@ import { TransformControls } from 'three/examples/jsm/controls/TransformControls
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 import { ROOM, defaultItems } from './room.js';
 
-const STORE = 'cuarto3d-v1';
+const STORE = 'cuarto3d-v2';
 const $ = (id) => document.getElementById(id);
 const view = $('view');
 
