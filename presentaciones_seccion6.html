@@ -16,7 +16,7 @@ button.pri:hover{background:#4338ca}
 button:disabled{opacity:.5;cursor:default}
 a{color:#1d4ed8;text-decoration:none} a:hover{text-decoration:underline}
 .panel{background:var(--card);border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);padding:1rem}
-.top{display:grid;grid-template-columns:1.1fr .9fr 1.2fr;gap:1rem;margin-bottom:1rem}
+.top{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,.75fr) minmax(0,1fr);gap:1rem;margin-bottom:1rem}
 @media (max-width:1000px){.top{grid-template-columns:1fr}}
 
 /* Orden */
@@ -30,6 +30,8 @@ a{color:#1d4ed8;text-decoration:none} a:hover{text-decoration:underline}
 #orderList .pos{width:1.6rem;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
 #orderList .g{background:#312e81;color:#fff;border-radius:5px;padding:.05rem .4rem;font-size:.8rem;white-space:nowrap}
 #orderList .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.blk{font-size:.7rem;border-radius:99px;padding:.05rem .45rem;white-space:nowrap;max-width:9rem;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.b-agro{background:#dcfce7;color:#166534}.b-bog{background:#dbeafe;color:#1e40af}.b-tur{background:#fee2e2;color:#991b1b}.b-eje{background:#fef3c7;color:#92400e}
 #orderList .mini{padding:.1rem .35rem;font-size:.75rem;border-radius:5px}
 @keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
@@ -151,6 +153,7 @@ body.hasann #stageFrame:fullscreen .annfs,body.hasann #timerPanel:fullscreen .an
     <div id="raffleBox"><div class="big">•••</div><div class="small">Pulsa el botón para sortear el orden de los grupos que no estén marcados</div></div>
     <button id="raffleBtn" class="pri">🔀 Rifar orden</button>
     <div class="row" style="margin-top:.5rem">
+      <button id="presetOrder" class="on">📋 Orden por bloques</button>
       <button id="resetOrder">Orden 1 → 13</button>
       <button id="clearDone">Desmarcar presentados</button>
     </div>
@@ -232,29 +235,32 @@ body.hasann #stageFrame:fullscreen .annfs,body.hasann #timerPanel:fullscreen .an
 const BASE='https://uniandes-my.sharepoint.com/personal/jb_martinez10_uniandes_edu_co/_layouts/15/embed.aspx?UniqueId=';
 const SP='https://uniandes-my.sharepoint.com/:b:/g/personal/jb_martinez10_uniandes_edu_co/';
 const G=[
- {n:1,tema:'Clúster de Energía Eléctrica de Bogotá-Región',quien:'Alejandro Tirado Alvarez',link:'IQBKBQfEGbbzQoqr8JNiP0CYAeHg200oygmZQcp3fMsdWYU',id:'c407054a-b619-42f3-8aab-f093623f4098'},
- {n:2,tema:'Clúster de turismo del Eje Cafetero',quien:'Paula Caro',link:'IQCg-awA4YpZQKEAz_XBIj2gAUXB-0-q8aJ7e7xGE-Um9Bg',id:'00acf9a0-8ae1-4059-a100-cff5c1223da0'},
- {n:3,tema:'Clúster de turismo médico en Medellín (Medellín Health City)',quien:'Juana María Castillo Ungar',link:'IQBsEsSjGi3IT6VFIcMGLx5YAchnxJTCpAS1H4PPL8_dkPk',id:'a3c4126c-2d1a-4fc8-a545-21c3062f1e58'},
- {n:4,tema:'Clúster floricultor en Colombia',quien:'María Sofía Alfonso Torres',link:'IQDGQNWOlRjVT4w6AYa_KL7QAd2umxSM5ytryCSLtEYAcXU',id:'8ed540c6-1895-4fd5-8c3a-0186bf28bed0'},
- {n:5,tema:'Clúster de turismo del Eje Cafetero',quien:'Mariana Betancourt Prada',link:'IQCM3x1UR-0dS7BMgPZ-YqcPAT2beORDrpKhuJsgDNihY0Y',id:'541ddf8c-ed47-4b1d-b04c-80f67e62a70f'},
- {n:6,tema:'Clúster de la cebolla de bulbo en Boyacá',quien:'Juan Camilo Flórez Ruiz',link:'IQChcUrao9RiRriEPy5YbQCbAQYekVuAlrRXN-KRIuVjpA0',id:'da4a71a1-d4a3-4662-b884-3f2e586d009b'},
- {n:7,tema:'Clúster de arte en Colombia (centrado en Bogotá)',quien:'Mariana Saavedra Moreno',link:'IQAjo7uaUkPWQoMOslAvobXeAROVCemF1FyeI8AvCLJI0I4',id:'9abba323-4352-42d6-830e-b2502fa1b5de'},
- {n:8,tema:'Clúster de cacao en el Eje Cafetero',quien:'María José Holguín Díaz',link:'IQAhsmjUI6fVTYCZCJ9YQeBIAUXCNkZLYmFhefuObGPP08s',id:'d468b221-a723-4dd5-8099-089f5841e048'},
- {n:9,tema:'Clúster de construcción de vivienda de interés social (VIS) en Bogotá',quien:'Mateo Ortiz Velandia',link:'IQC4dsWSksE7ToUy0UTLEEnnAfQTvtH0TiMinrO2m105590',id:'92c576b8-c192-4e3b-8532-d144cb1049e7'},
- {n:10,tema:'Clúster lechero del altiplano cundiboyacense',quien:'Samuel Pérez López',link:'IQDoREIheW0XTIe0oqFfu-_3AQlIO0guEZvpGlBSTiSWzdw',id:'214244e8-6d79-4c17-87b4-a2a15fbbeff7'},
- {n:11,tema:'Clúster de consultoría en IA en Colombia',quien:'María José Caicedo González',link:'IQB3m-2Hxl9LRpTJkfXP0eLRAar_RCSfUgLghHPT0jR4P7c',id:'87ed9b77-5fc6-464b-94c9-91f5cfd1e2d1'},
- {n:12,tema:'Clúster de turismo en Cartagena de Indias',quien:'Rafael Díaz Echeverri',link:'IQDX9ODmrekoSa2YLL-dvim1AVq1gEs99dWChA3J8BVfjAk',id:'e6e0f4d7-e9ad-4928-ad98-2cbf9dbe29b5'},
- {n:13,tema:'Clúster de cafés de especialidad en el Eje Cafetero',quien:'María Juliana Sánchez Rubio',link:'IQC6ySYnPbPZRrhyTvaAi6cEAXDSgy6Jd6C5qYZGVGNolsg',id:'2726c9ba-b33d-46d9-b872-4ef6808ba704'},
+ {n:1,b:'bog',tema:'Clúster de Energía Eléctrica de Bogotá-Región',quien:'Alejandro Tirado Alvarez',link:'IQBKBQfEGbbzQoqr8JNiP0CYAeHg200oygmZQcp3fMsdWYU',id:'c407054a-b619-42f3-8aab-f093623f4098'},
+ {n:2,b:'tur',tema:'Clúster de turismo del Eje Cafetero',quien:'Paula Caro',link:'IQCg-awA4YpZQKEAz_XBIj2gAUXB-0-q8aJ7e7xGE-Um9Bg',id:'00acf9a0-8ae1-4059-a100-cff5c1223da0'},
+ {n:3,b:'tur',tema:'Clúster de turismo médico en Medellín (Medellín Health City)',quien:'Juana María Castillo Ungar',link:'IQBsEsSjGi3IT6VFIcMGLx5YAchnxJTCpAS1H4PPL8_dkPk',id:'a3c4126c-2d1a-4fc8-a545-21c3062f1e58'},
+ {n:4,b:'agro',tema:'Clúster floricultor en Colombia',quien:'María Sofía Alfonso Torres',link:'IQDGQNWOlRjVT4w6AYa_KL7QAd2umxSM5ytryCSLtEYAcXU',id:'8ed540c6-1895-4fd5-8c3a-0186bf28bed0'},
+ {n:5,b:'tur',tema:'Clúster de turismo del Eje Cafetero',quien:'Mariana Betancourt Prada',link:'IQCM3x1UR-0dS7BMgPZ-YqcPAT2beORDrpKhuJsgDNihY0Y',id:'541ddf8c-ed47-4b1d-b04c-80f67e62a70f'},
+ {n:6,b:'agro',tema:'Clúster de la cebolla de bulbo en Boyacá',quien:'Juan Camilo Flórez Ruiz',link:'IQChcUrao9RiRriEPy5YbQCbAQYekVuAlrRXN-KRIuVjpA0',id:'da4a71a1-d4a3-4662-b884-3f2e586d009b'},
+ {n:7,b:'bog',tema:'Clúster de arte en Colombia (centrado en Bogotá)',quien:'Mariana Saavedra Moreno',link:'IQAjo7uaUkPWQoMOslAvobXeAROVCemF1FyeI8AvCLJI0I4',id:'9abba323-4352-42d6-830e-b2502fa1b5de'},
+ {n:8,b:'eje',tema:'Clúster de cacao en el Eje Cafetero',quien:'María José Holguín Díaz',link:'IQAhsmjUI6fVTYCZCJ9YQeBIAUXCNkZLYmFhefuObGPP08s',id:'d468b221-a723-4dd5-8099-089f5841e048'},
+ {n:9,b:'bog',tema:'Clúster de construcción de vivienda de interés social (VIS) en Bogotá',quien:'Mateo Ortiz Velandia',link:'IQC4dsWSksE7ToUy0UTLEEnnAfQTvtH0TiMinrO2m105590',id:'92c576b8-c192-4e3b-8532-d144cb1049e7'},
+ {n:10,b:'agro',tema:'Clúster lechero del altiplano cundiboyacense',quien:'Samuel Pérez López',link:'IQDoREIheW0XTIe0oqFfu-_3AQlIO0guEZvpGlBSTiSWzdw',id:'214244e8-6d79-4c17-87b4-a2a15fbbeff7'},
+ {n:11,b:'bog',tema:'Clúster de consultoría en IA en Colombia',quien:'María José Caicedo González',link:'IQB3m-2Hxl9LRpTJkfXP0eLRAar_RCSfUgLghHPT0jR4P7c',id:'87ed9b77-5fc6-464b-94c9-91f5cfd1e2d1'},
+ {n:12,b:'tur',tema:'Clúster de turismo en Cartagena de Indias',quien:'Rafael Díaz Echeverri',link:'IQDX9ODmrekoSa2YLL-dvim1AVq1gEs99dWChA3J8BVfjAk',id:'e6e0f4d7-e9ad-4928-ad98-2cbf9dbe29b5'},
+ {n:13,b:'eje',tema:'Clúster de cafés de especialidad en el Eje Cafetero',quien:'María Juliana Sánchez Rubio',link:'IQC6ySYnPbPZRrhyTvaAi6cEAXDSgy6Jd6C5qYZGVGNolsg',id:'2726c9ba-b33d-46d9-b872-4ef6808ba704'},
 ];
+const BLOQUES={agro:'Agro (otras regiones)',bog:'Bogotá: industria y servicios',tur:'Turismo',eje:'Agro (Eje Cafetero)'};
+const CORTO={agro:"Agro",bog:"Bogotá",tur:"Turismo",eje:"Agro Eje Cafetero"};
+const PRESET=[4,10,6,9,11,7,1,12,2,5,3,13,8]; // orden por criterios: bloques temáticos + sorteo
 const byN=Object.fromEntries(G.map(g=>[g.n,g]));
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 /* ---------- Estado (se guarda en el navegador) ---------- */
-const KEY='presentaciones-s6-2026-20';
+const KEY='presentaciones-s6-2026-20-v2';
 let st;
 try{st=JSON.parse(localStorage.getItem(KEY))}catch(e){}
-if(!st||!Array.isArray(st.order)||st.order.length!==G.length) st={order:G.map(g=>g.n),cur:G[0].n,done:[]};
+if(!st||!Array.isArray(st.order)||st.order.length!==G.length) st={order:[...PRESET],cur:PRESET[0],done:[]};
 const save=()=>localStorage.setItem(KEY,JSON.stringify(st));
 
 /* ---------- Orden ---------- */
@@ -266,7 +272,7 @@ function renderOrder(stagger){
     li.draggable=true; li.dataset.i=i;
     li.className=(n===st.cur?'cur ':'')+(st.done.includes(n)?'done ':'')+(stagger?'anim':'');
     li.style.animationDelay=stagger?(i*90)+'ms':'0ms';
-    li.innerHTML=`<input type="checkbox" data-chk="${n}" ${st.done.includes(n)?'checked':''} title="Ya presentó (no entra en la rifa)"><span class="pos">${i+1}.</span><span class="g">Grupo ${n}</span><span class="t" title="${esc(g.tema)}">${esc(g.tema)}</span>
+    li.innerHTML=`<input type="checkbox" data-chk="${n}" ${st.done.includes(n)?'checked':''} title="Ya presentó (no entra en la rifa)"><span class="pos">${i+1}.</span><span class="g">Grupo ${n}</span><span class="t" title="${esc(g.tema)}">${esc(g.tema)}</span><span class="blk b-${g.b}" title="${BLOQUES[g.b]}">${CORTO[g.b]}</span>
       <button class="mini" data-up="${i}" title="Subir">▲</button><button class="mini" data-down="${i}" title="Bajar">▼</button>`;
     li.addEventListener('click',e=>{ if(e.target.closest('button,input'))return; select(n); });
     li.addEventListener('dragstart',()=>{dragFrom=i});
@@ -297,6 +303,7 @@ $('#applyManual').onclick=()=>{
   st.cur=st.order[0]; changed(true); raffleMsg('Orden manual aplicado');
 };
 $('#manualOrder').addEventListener('keydown',e=>{if(e.key==='Enter')$('#applyManual').click()});
+$('#presetOrder').onclick=()=>{st.order=[...PRESET];st.cur=PRESET.find(n=>!st.done.includes(n))??PRESET[0];changed(true);raffleMsg('Orden por bloques temáticos')};
 $('#resetOrder').onclick=()=>{st.order=G.map(g=>g.n);st.cur=1;changed(true);raffleMsg('Orden 1 → 13')};
 function raffleMsg(t){$('#raffleBox').innerHTML=`<div class="small">${t}</div><div class="big">Grupo ${st.order[0]}</div><div class="small">abre la jornada</div>`}
 $('#clearDone').onclick=()=>{st.done=[];changed();updRaffleHint()};
@@ -325,7 +332,7 @@ const cards={};
 G.forEach(g=>{
   const c=document.createElement('div'); c.className='card';
   c.innerHTML=`<div class="thumb"><span class="badge"></span><iframe src="${BASE+g.id}" title="Presentación Grupo ${g.n}" loading="lazy" allow="fullscreen" allowfullscreen></iframe></div>
-   <div class="body"><div class="ttl">Grupo ${g.n} · ${esc(g.tema)}</div><div class="who">Entregó: ${esc(g.quien)}</div>
+   <div class="body"><div class="ttl">Grupo ${g.n} · ${esc(g.tema)}</div><div class="who"><span class="blk b-${g.b}">${BLOQUES[g.b]}</span> · Entregó: ${esc(g.quien)}</div>
    <div class="row" style="margin-top:auto"><button data-pick="${g.n}">Presentar</button><button data-pickfs="${g.n}">⛶ Pantalla completa</button><a href="${SP+g.link}" target="_blank" rel="noopener">OneDrive ↗</a></div></div>`;
   cards[g.n]=c;
 });
@@ -346,7 +353,7 @@ function renderGrid(){
 function renderStage(){
   const g=byN[st.cur], pos=st.order.indexOf(st.cur)+1;
   $('#stageTitle').innerHTML=`<span>Grupo ${g.n}</span>${esc(g.tema)}`;
-  $('#stageMeta').innerHTML=`Turno ${pos} de ${G.length} · Entregó: ${esc(g.quien)} · <a href="${SP+g.link}" target="_blank" rel="noopener">Abrir en OneDrive ↗</a>${st.done.includes(g.n)?' · ✔ presentado':''}`;
+  $('#stageMeta').innerHTML=`Turno ${pos} de ${G.length} · <span class="blk b-${g.b}">${BLOQUES[g.b]}</span> · Entregó: ${esc(g.quien)} · <a href="${SP+g.link}" target="_blank" rel="noopener">Abrir en OneDrive ↗</a>${st.done.includes(g.n)?' · ✔ presentado':''}`;
   const ifr=$('#stageIframe'), src=BASE+g.id;
   if(ifr.getAttribute('src')!==src) ifr.setAttribute('src',src);
   $$('[data-tgroup]').forEach(el=>el.textContent=`Turno ${pos}/${G.length} · Grupo ${g.n}: ${g.tema}`);
