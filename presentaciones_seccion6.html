@@ -118,6 +118,11 @@ body.hasann #stageFrame.isfs .annfs,body.hasann #timerPanel.isfs .annfs{display:
 .pfs{position:fixed!important;inset:0!important;z-index:1000!important;width:100vw!important;height:100vh!important;max-width:none!important;margin:0!important;border-radius:0!important;aspect-ratio:auto!important;background:#fff}
 #stageFrame.pfs{background:#111}
 body.pfs-on{overflow:hidden}
+#sandboxWarn{display:none;background:#fee2e2;color:#7f1d1d;border:2px solid #dc2626;border-radius:12px;padding:.9rem 1.1rem;margin:0 0 1rem;font-size:1rem;line-height:1.45}
+body.sandboxed #sandboxWarn{display:block}
+.openpdf{position:absolute;left:12px;bottom:12px;z-index:4;background:rgba(17,24,39,.85);color:#fff!important;border-radius:8px;padding:.35rem .7rem;font-size:.85rem;text-decoration:none!important}
+.openpdf:hover{background:#4f46e5}
+body.hasann #stageFrame.isfs .openpdf{bottom:5.5rem}
 </style></head><body>
 <div class="wrap">
 <div class="hdr">
@@ -131,6 +136,12 @@ body.pfs-on{overflow:hidden}
   </div>
 </div>
 
+<div id="sandboxWarn" role="alert">
+  <b>⚠️ Las presentaciones no pueden cargarse en esta vista.</b>
+  Estás viendo la página dentro de un visor (por ejemplo, la vista previa de OneDrive o Teams), que bloquea los documentos de SharePoint.
+  <b>Descarga el archivo y ábrelo con doble clic en Edge o Chrome</b> (con tu sesión de Uniandes iniciada), o usa «Abrir → en el navegador».
+  Mientras tanto, cada presentación se puede abrir con el botón «Abrir PDF ↗».
+</div>
 <div id="annBanner" role="alert"><span class="ic">📢</span><span data-anntext></span></div>
 <div class="panel annedit">
   <textarea id="annInput" rows="1" placeholder="Escribe un anuncio para el curso (ej: Recuerden diligenciar la encuesta del curso)…"></textarea>
@@ -201,6 +212,7 @@ body.pfs-on{overflow:hidden}
     </div>
   </div>
   <div id="stageFrame">
+    <a class="openpdf" id="stagePdf" target="_blank" rel="noopener" title="Si la presentación no carga aquí, ábrela en una pestaña nueva">Abrir PDF ↗</a>
     <iframe id="stageIframe" title="Presentación actual" allow="fullscreen" allowfullscreen></iframe>
     <div class="ov" id="overlay" data-timer>
       <div class="row" style="justify-content:space-between">
@@ -220,6 +232,7 @@ body.pfs-on{overflow:hidden}
         <button data-act="prev">◀</button>
         <button data-act="next">Siguiente ⏭</button>
         <button data-act="exitfs">Salir ✕</button>
+        <a class="ovpdf" id="ovPdf" target="_blank" rel="noopener" style="color:#c7d2fe;font-size:.8rem;align-self:center">PDF ↗</a>
       </div>
     </div>
     <div class="annfs">📢 <span data-anntext></span></div>
@@ -359,6 +372,7 @@ function renderStage(){
   $('#stageMeta').innerHTML=`Turno ${pos} de ${G.length} · <span class="blk b-${g.b}">${BLOQUES[g.b]}</span> · Entregó: ${esc(g.quien)} · <a href="${SP+g.link}" target="_blank" rel="noopener">Abrir en OneDrive ↗</a>${st.done.includes(g.n)?' · ✔ presentado':''}`;
   const ifr=$('#stageIframe'), src=BASE+g.id;
   if(ifr.getAttribute('src')!==src) ifr.setAttribute('src',src);
+  $('#stagePdf').href=SP+g.link; $('#ovPdf').href=SP+g.link;
   $$('[data-tgroup]').forEach(el=>el.textContent=`Turno ${pos}/${G.length} · Grupo ${g.n}: ${g.tema}`);
 }
 function select(n){st.cur=n;changed()}
@@ -475,6 +489,9 @@ ACT.annHide=()=>{st.ann='';save();applyAnn()};
 $('#annInput').value=st.ann||'';
 $('#annInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();ACT.annShow()}});
 applyAnn();
+
+/* Visor aislado (vista previa de OneDrive/Teams): SharePoint no carga dentro de él */
+try{localStorage.getItem('x')}catch(e){document.body.classList.add('sandboxed')}
 
 changed(); renderT(); updRaffleHint();
 </script>
