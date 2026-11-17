@@ -56,11 +56,11 @@ a{color:#1d4ed8;text-decoration:none} a:hover{text-decoration:underline}
 .bar i{display:block;height:100%;width:100%;background:var(--ok);transition:width .25s linear}
 .warn .bar i{background:var(--warn)} .over .bar i{background:var(--bad)}
 .timer button.on{outline:2px solid var(--acc)}
-#timerPanel:fullscreen{display:flex;flex-direction:column;justify-content:center;align-items:center;padding:3rem}
-#timerPanel:fullscreen .tdisp{font-size:28vh}
-#timerPanel:fullscreen .tgroup{font-size:3vh}
-#timerPanel:fullscreen .tmode{font-size:2.5vh}
-#timerPanel:fullscreen .bar{width:70vw;height:14px}
+#timerPanel.isfs{display:flex;flex-direction:column;justify-content:center;align-items:center;padding:3rem}
+#timerPanel.isfs .tdisp{font-size:28vh}
+#timerPanel.isfs .tgroup{font-size:3vh}
+#timerPanel.isfs .tmode{font-size:2.5vh}
+#timerPanel.isfs .bar{width:70vw;height:14px}
 
 /* Escenario */
 .stagehead{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;margin-bottom:.6rem}
@@ -69,9 +69,9 @@ a{color:#1d4ed8;text-decoration:none} a:hover{text-decoration:underline}
 .stagehead .meta{color:var(--muted);font-size:.9rem;margin-top:.25rem}
 #stageFrame{position:relative;width:100%;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#111}
 #stageFrame iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:#f9fafb}
-#stageFrame:fullscreen{border-radius:0;aspect-ratio:auto}
+#stageFrame.isfs{border-radius:0;aspect-ratio:auto}
 .ov{position:absolute;right:12px;top:12px;z-index:5;background:rgba(17,24,39,.85);color:#fff;border-radius:12px;padding:.5rem .75rem;display:none;flex-direction:column;gap:.35rem;min-width:220px;backdrop-filter:blur(4px)}
-#stageFrame:fullscreen .ov{display:flex}
+#stageFrame.isfs .ov{display:flex}
 .ov .tdisp{font-size:2.6rem;color:#34d399}
 .ov.warn .tdisp{color:#fbbf24} .ov.over .tdisp{color:#f87171}
 .ov .tmode{color:#c7d2fe;font-size:.7rem}
@@ -103,18 +103,21 @@ kbd{background:#f3f4f6;border:1px solid var(--line);border-radius:4px;padding:0 
 body.noclock [data-clockwrap]{display:none!important}
 .ov .ovclock{font-size:.85rem;color:#c7d2fe;font-variant-numeric:tabular-nums}
 .tclock{font-size:1rem;color:var(--muted);font-variant-numeric:tabular-nums}
-#timerPanel .tclock{display:none} #timerPanel:fullscreen .tclock{display:block;font-size:3.5vh}
+#timerPanel .tclock{display:none} #timerPanel.isfs .tclock{display:block;font-size:3.5vh}
 /* Anuncios */
 #annBanner{display:none;position:sticky;top:0;z-index:20;margin:0 0 1rem;background:#fde047;color:#111827;border:3px solid #ca8a04;border-radius:12px;padding:1rem 1.25rem;font-size:2rem;font-weight:800;line-height:1.25;box-shadow:0 6px 20px rgba(202,138,4,.35);white-space:pre-wrap;animation:annpulse 2.5s ease-in-out infinite}
 body.hasann #annBanner{display:flex;gap:.75rem;align-items:center}
 #annBanner .ic{font-size:2.2rem}
 @keyframes annpulse{50%{box-shadow:0 6px 30px rgba(202,138,4,.75)}}
 .annfs{display:none;position:absolute;left:0;right:0;bottom:0;z-index:6;background:#fde047;color:#111827;border-top:4px solid #ca8a04;padding:1rem 1.5rem;font-size:2.4rem;font-weight:800;white-space:pre-wrap;text-align:center}
-body.hasann #stageFrame:fullscreen .annfs,body.hasann #timerPanel:fullscreen .annfs{display:block}
+body.hasann #stageFrame.isfs .annfs,body.hasann #timerPanel.isfs .annfs{display:block}
 #timerPanel{position:relative}
 .annedit{display:flex;gap:.5rem;flex-wrap:wrap;align-items:stretch;margin-bottom:1rem}
 .annedit textarea{flex:1;min-width:14rem;font:inherit;font-size:1rem;padding:.5rem .6rem;border:1px solid var(--line);border-radius:8px;resize:vertical;min-height:2.6rem}
 #orderList input[type=checkbox]{width:1.05rem;height:1.05rem;cursor:pointer;accent-color:var(--ok)}
+.pfs{position:fixed!important;inset:0!important;z-index:1000!important;width:100vw!important;height:100vh!important;max-width:none!important;margin:0!important;border-radius:0!important;aspect-ratio:auto!important;background:#fff}
+#stageFrame.pfs{background:#111}
+body.pfs-on{overflow:hidden}
 </style></head><body>
 <div class="wrap">
 <div class="hdr">
@@ -261,7 +264,7 @@ const KEY='presentaciones-s6-2026-20-v2';
 let st;
 try{st=JSON.parse(localStorage.getItem(KEY))}catch(e){}
 if(!st||!Array.isArray(st.order)||st.order.length!==G.length) st={order:[...PRESET],cur:PRESET[0],done:[]};
-const save=()=>localStorage.setItem(KEY,JSON.stringify(st));
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}};
 
 /* ---------- Orden ---------- */
 let dragFrom=null;
@@ -368,9 +371,22 @@ function step(d){
 function changed(stagger){save();renderOrder(stagger);renderGrid();renderStage()}
 
 /* ---------- Pantalla completa ---------- */
-function fsEl(){return document.fullscreenElement||document.webkitFullscreenElement}
-function reqFs(el){(el.requestFullscreen||el.webkitRequestFullscreen).call(el)}
-function exitFs(){if(fsEl())(document.exitFullscreen||document.webkitExitFullscreen).call(document)}
+/* Usa la API real; si el visor no la permite (p. ej. vista previa de OneDrive), simula la pantalla completa con CSS. */
+function realFs(){return document.fullscreenElement||document.webkitFullscreenElement}
+function fsEl(){return realFs()||$('.pfs')}
+function syncFs(){$$('.isfs').forEach(e=>e.classList.remove('isfs'));const f=fsEl();if(f)f.classList.add('isfs');document.body.classList.toggle('pfs-on',!!$('.pfs'))}
+function pseudoFs(el){$$('.pfs').forEach(e=>e.classList.remove('pfs'));el.classList.add('pfs');syncFs()}
+function reqFs(el){
+  const f=el.requestFullscreen||el.webkitRequestFullscreen;
+  if(!f||!(document.fullscreenEnabled||document.webkitFullscreenEnabled)){pseudoFs(el);return}
+  try{const r=f.call(el);if(r&&r.catch)r.catch(()=>pseudoFs(el))}catch(e){pseudoFs(el)}
+}
+function exitFs(){
+  if($('.pfs')){$$('.pfs').forEach(e=>e.classList.remove('pfs'));syncFs();return}
+  if(realFs())(document.exitFullscreen||document.webkitExitFullscreen).call(document);
+}
+document.addEventListener('fullscreenchange',syncFs);document.addEventListener('webkitfullscreenchange',syncFs);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('.pfs'))exitFs()});
 function goFs(){if(fsEl()===$('#stageFrame'))exitFs();else reqFs($('#stageFrame'))}
 
 /* ---------- Temporizador ---------- */
