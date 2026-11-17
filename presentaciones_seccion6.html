@@ -123,6 +123,13 @@ body.sandboxed #sandboxWarn{display:block}
 .openpdf{position:absolute;left:12px;bottom:12px;z-index:4;background:rgba(17,24,39,.85);color:#fff!important;border-radius:8px;padding:.35rem .7rem;font-size:.85rem;text-decoration:none!important}
 .openpdf:hover{background:#4f46e5}
 body.hasann #stageFrame.isfs .openpdf{bottom:5.5rem}
+.btnlike{display:inline-block;cursor:pointer;border:1px solid var(--line);background:#fff;border-radius:8px;padding:.45rem .75rem}
+.btnlike:hover{border-color:#a5b4fc;background:#f5f7ff}
+.btnlike.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+.card .btnlike{padding:.3rem .55rem;font-size:.82rem}
+.localpdf{display:flex;gap:1rem;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:1rem;font-size:.92rem}
+.localpdf>div:first-child{flex:1;min-width:18rem}
+.loc{font-size:.7rem;background:#dcfce7;color:#166534;border-radius:99px;padding:.05rem .45rem;font-weight:600}
 </style></head><body>
 <div class="wrap">
 <div class="hdr">
@@ -143,6 +150,14 @@ body.hasann #stageFrame.isfs .openpdf{bottom:5.5rem}
   Mientras tanto, cada presentación se puede abrir con el botón «Abrir PDF ↗».
 </div>
 <div id="annBanner" role="alert"><span class="ic">📢</span><span data-anntext></span></div>
+<div class="panel localpdf">
+  <div><b>📂 ¿No cargan las presentaciones de OneDrive?</b> Descarga los PDF de los grupos a una carpeta y cárgalos aquí (puedes seleccionarlos todos a la vez). Se muestran sin necesidad de iniciar sesión.
+  <span class="hint" style="display:block">Para asignarlos solos, el nombre del archivo debe incluir el número del grupo, ej: <code>Grupo 3.pdf</code>, <code>G3.pdf</code> o <code>3.pdf</code>. También puedes cargar uno por uno con el botón «📄 PDF local» de cada tarjeta.</span></div>
+  <div class="row">
+    <label class="btnlike pri">📂 Cargar PDFs<input type="file" id="bulkPdf" accept="application/pdf,.pdf" multiple hidden></label>
+    <span id="localStatus" class="hint" style="margin:0"></span>
+  </div>
+</div>
 <div class="panel annedit">
   <textarea id="annInput" rows="1" placeholder="Escribe un anuncio para el curso (ej: Recuerden diligenciar la encuesta del curso)…"></textarea>
   <button class="pri" data-act="annShow">📢 Publicar anuncio</button>
@@ -268,6 +283,8 @@ const G=[
 const BLOQUES={agro:'Agro (otras regiones)',bog:'Bogotá: industria y servicios',tur:'Turismo',eje:'Agro (Eje Cafetero)'};
 const CORTO={agro:"Agro",bog:"Bogotá",tur:"Turismo",eje:"Agro Eje Cafetero"};
 const PRESET=[4,10,6,9,11,7,1,12,2,5,3,13,8]; // orden por criterios: bloques temáticos + sorteo
+const LOCAL={};
+const srcFor=g=>LOCAL[g.n]||BASE+g.id;
 const byN=Object.fromEntries(G.map(g=>[g.n,g]));
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -347,9 +364,9 @@ $('#raffleBtn').onclick=()=>{
 const cards={};
 G.forEach(g=>{
   const c=document.createElement('div'); c.className='card';
-  c.innerHTML=`<div class="thumb"><span class="badge"></span><iframe src="${BASE+g.id}" title="Presentación Grupo ${g.n}" loading="lazy" allow="fullscreen" allowfullscreen></iframe></div>
+  c.innerHTML=`<div class="thumb"><span class="badge"></span><iframe src="${srcFor(g)}" title="Presentación Grupo ${g.n}" loading="lazy" allow="fullscreen" allowfullscreen></iframe></div>
    <div class="body"><div class="ttl">Grupo ${g.n} · ${esc(g.tema)}</div><div class="who"><span class="blk b-${g.b}">${BLOQUES[g.b]}</span> · Entregó: ${esc(g.quien)}</div>
-   <div class="row" style="margin-top:auto"><button data-pick="${g.n}">Presentar</button><button data-pickfs="${g.n}">⛶ Pantalla completa</button><a href="${SP+g.link}" target="_blank" rel="noopener">OneDrive ↗</a></div></div>`;
+   <div class="row" style="margin-top:auto"><button data-pick="${g.n}">Presentar</button><button data-pickfs="${g.n}">⛶ Pantalla completa</button><label class="btnlike" title="Usar un PDF descargado en este computador">📄 PDF local<input type="file" accept="application/pdf,.pdf" data-local="${g.n}" hidden></label><a href="${SP+g.link}" target="_blank" rel="noopener">OneDrive ↗</a></div></div>`;
   cards[g.n]=c;
 });
 $('#grid').addEventListener('click',e=>{
@@ -370,7 +387,7 @@ function renderStage(){
   const g=byN[st.cur], pos=st.order.indexOf(st.cur)+1;
   $('#stageTitle').innerHTML=`<span>Grupo ${g.n}</span>${esc(g.tema)}`;
   $('#stageMeta').innerHTML=`Turno ${pos} de ${G.length} · <span class="blk b-${g.b}">${BLOQUES[g.b]}</span> · Entregó: ${esc(g.quien)} · <a href="${SP+g.link}" target="_blank" rel="noopener">Abrir en OneDrive ↗</a>${st.done.includes(g.n)?' · ✔ presentado':''}`;
-  const ifr=$('#stageIframe'), src=BASE+g.id;
+  const ifr=$('#stageIframe'), src=srcFor(g);
   if(ifr.getAttribute('src')!==src) ifr.setAttribute('src',src);
   $('#stagePdf').href=SP+g.link; $('#ovPdf').href=SP+g.link;
   $$('[data-tgroup]').forEach(el=>el.textContent=`Turno ${pos}/${G.length} · Grupo ${g.n}: ${g.tema}`);
@@ -489,6 +506,33 @@ ACT.annHide=()=>{st.ann='';save();applyAnn()};
 $('#annInput').value=st.ann||'';
 $('#annInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();ACT.annShow()}});
 applyAnn();
+
+/* ---------- PDFs locales (respaldo si SharePoint no carga) ---------- */
+function assignLocal(n,file){
+  if(LOCAL[n])URL.revokeObjectURL(LOCAL[n].split('#')[0]);
+  LOCAL[n]=URL.createObjectURL(file)+'#view=Fit';
+  cards[n].querySelector('iframe').src=LOCAL[n];
+  const t=cards[n].querySelector('.ttl'); if(!t.querySelector('.loc'))t.insertAdjacentHTML('beforeend',' <span class="loc">PDF local</span>');
+}
+function numFromName(name){
+  const b=name.replace(/\.pdf$/i,'');
+  const m=b.match(/grupo\s*[-_#.]?\s*(\d{1,2})/i)||b.match(/(?:^|[^a-z])g\s*[-_]?\s*(\d{1,2})(?!\d)/i)||b.match(/^\s*(\d{1,2})(?!\d)/);
+  const n=m?+m[1]:NaN; return byN[n]?n:null;
+}
+function updLocalStatus(extra){
+  const k=Object.keys(LOCAL).length;
+  $('#localStatus').innerHTML=(k?`✔ ${k} de ${G.length} PDF cargados (grupos ${Object.keys(LOCAL).sort((a,b)=>a-b).join(', ')}).`:'')+(extra||'');
+}
+$('#bulkPdf').addEventListener('change',e=>{
+  const sin=[];
+  for(const f of e.target.files){const n=numFromName(f.name); if(n)assignLocal(n,f); else sin.push(f.name)}
+  e.target.value=''; renderStage();
+  updLocalStatus(sin.length?` <span style="color:#b91c1c">Sin número de grupo (cárgalos con «📄 PDF local» en su tarjeta): ${sin.map(esc).join(', ')}</span>`:'');
+});
+$('#grid').addEventListener('change',e=>{
+  const inp=e.target.closest('[data-local]'); if(!inp||!inp.files[0])return;
+  assignLocal(+inp.dataset.local,inp.files[0]); inp.value=''; renderStage(); updLocalStatus();
+});
 
 /* Visor aislado (vista previa de OneDrive/Teams): SharePoint no carga dentro de él */
 try{localStorage.getItem('x')}catch(e){document.body.classList.add('sandboxed')}
