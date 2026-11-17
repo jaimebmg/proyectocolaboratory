@@ -93,10 +93,45 @@ a{color:#1d4ed8;text-decoration:none} a:hover{text-decoration:underline}
 .card .row button{padding:.3rem .55rem;font-size:.82rem}
 .kbd{font-size:.78rem;color:var(--muted);margin-top:.75rem}
 kbd{background:#f3f4f6;border:1px solid var(--line);border-radius:4px;padding:0 .3rem;font-size:.75rem}
+/* Reloj */
+.hdr{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap}
+.clockbox{display:flex;align-items:center;gap:.6rem}
+#clock{font-size:2.4rem;font-weight:800;font-variant-numeric:tabular-nums;color:#312e81;line-height:1}
+#clock small{display:block;font-size:.8rem;font-weight:500;color:var(--muted);text-align:right;margin-top:.2rem}
+body.noclock [data-clockwrap]{display:none!important}
+.ov .ovclock{font-size:.85rem;color:#c7d2fe;font-variant-numeric:tabular-nums}
+.tclock{font-size:1rem;color:var(--muted);font-variant-numeric:tabular-nums}
+#timerPanel .tclock{display:none} #timerPanel:fullscreen .tclock{display:block;font-size:3.5vh}
+/* Anuncios */
+#annBanner{display:none;position:sticky;top:0;z-index:20;margin:0 0 1rem;background:#fde047;color:#111827;border:3px solid #ca8a04;border-radius:12px;padding:1rem 1.25rem;font-size:2rem;font-weight:800;line-height:1.25;box-shadow:0 6px 20px rgba(202,138,4,.35);white-space:pre-wrap;animation:annpulse 2.5s ease-in-out infinite}
+body.hasann #annBanner{display:flex;gap:.75rem;align-items:center}
+#annBanner .ic{font-size:2.2rem}
+@keyframes annpulse{50%{box-shadow:0 6px 30px rgba(202,138,4,.75)}}
+.annfs{display:none;position:absolute;left:0;right:0;bottom:0;z-index:6;background:#fde047;color:#111827;border-top:4px solid #ca8a04;padding:1rem 1.5rem;font-size:2.4rem;font-weight:800;white-space:pre-wrap;text-align:center}
+body.hasann #stageFrame:fullscreen .annfs,body.hasann #timerPanel:fullscreen .annfs{display:block}
+#timerPanel{position:relative}
+.annedit{display:flex;gap:.5rem;flex-wrap:wrap;align-items:stretch;margin-bottom:1rem}
+.annedit textarea{flex:1;min-width:14rem;font:inherit;font-size:1rem;padding:.5rem .6rem;border:1px solid var(--line);border-radius:8px;resize:vertical;min-height:2.6rem}
+#orderList input[type=checkbox]{width:1.05rem;height:1.05rem;cursor:pointer;accent-color:var(--ok)}
 </style></head><body>
 <div class="wrap">
-<h1>PRESENTACIONES</h1>
-<p class="sub">Presentaciones finales – Sección 6 · Análisis de Entorno Colombiano · 2026-20 · Martes</p>
+<div class="hdr">
+  <div>
+    <h1>PRESENTACIONES</h1>
+    <p class="sub">Presentaciones finales – Sección 6 · Análisis de Entorno Colombiano · 2026-20 · Martes</p>
+  </div>
+  <div class="clockbox">
+    <div id="clock" data-clockwrap><span data-clock>--:--</span><small data-date></small></div>
+    <button data-act="clockToggle" id="clockBtn">🕒 Ocultar reloj</button>
+  </div>
+</div>
+
+<div id="annBanner" role="alert"><span class="ic">📢</span><span data-anntext></span></div>
+<div class="panel annedit">
+  <textarea id="annInput" rows="1" placeholder="Escribe un anuncio para el curso (ej: Recuerden diligenciar la encuesta del curso)…"></textarea>
+  <button class="pri" data-act="annShow">📢 Publicar anuncio</button>
+  <button data-act="annHide">Quitar anuncio</button>
+</div>
 
 <div class="top">
   <!-- ORDEN -->
@@ -107,13 +142,13 @@ kbd{background:#f3f4f6;border:1px solid var(--line);border-radius:4px;padding:0 
       <input id="manualOrder" placeholder="Orden manual, ej: 3, 2, 11, 5">
       <button id="applyManual">Aplicar</button>
     </div>
-    <p class="hint">Arrastra para reordenar o usa ▲▼. Los grupos que no escribas en el orden manual quedan al final.</p>
+    <p class="hint">☑ = ya presentó: queda fijo arriba y <b>no entra en la rifa</b>. Arrastra para reordenar o usa ▲▼. Los grupos que no escribas en el orden manual quedan al final.</p>
   </div>
 
   <!-- RIFA -->
   <div class="panel">
     <h2>Rifa del orden</h2>
-    <div id="raffleBox"><div class="big">•••</div><div class="small">Pulsa el botón para sortear el orden de los 13 grupos</div></div>
+    <div id="raffleBox"><div class="big">•••</div><div class="small">Pulsa el botón para sortear el orden de los grupos que no estén marcados</div></div>
     <button id="raffleBtn" class="pri">🔀 Rifar orden</button>
     <div class="row" style="margin-top:.5rem">
       <button id="resetOrder">Orden 1 → 13</button>
@@ -130,6 +165,7 @@ kbd{background:#f3f4f6;border:1px solid var(--line);border-radius:4px;padding:0 
     <div class="tmode" data-tmode></div>
     <div class="tgroup" data-tgroup></div>
     <div class="tdisp" data-tdisp>15:00</div>
+    <div class="tclock" data-clockwrap>🕒 <span data-clock></span></div>
     <div class="bar"><i data-tbar></i></div>
     <div class="row">
       <button data-act="expo" data-modebtn="expo">▶ Exposición 15 min</button>
@@ -141,6 +177,7 @@ kbd{background:#f3f4f6;border:1px solid var(--line);border-radius:4px;padding:0 
       <button data-act="plus">+1 min</button>
       <button data-act="next" class="pri">Siguiente grupo ⏭</button>
     </div>
+    <div class="annfs">📢 <span data-anntext></span></div>
   </div>
 </div>
 
@@ -165,6 +202,7 @@ kbd{background:#f3f4f6;border:1px solid var(--line);border-radius:4px;padding:0 
         <button data-act="ovmin" title="Minimizar / expandir">▁</button>
       </div>
       <div class="tdisp" data-tdisp>15:00</div>
+      <div class="ovclock" data-clockwrap>🕒 <span data-clock></span></div>
       <div class="hide-min tgroup" data-tgroup></div>
       <div class="hide-min row">
         <button data-act="expo">Expo 15</button>
@@ -178,6 +216,7 @@ kbd{background:#f3f4f6;border:1px solid var(--line);border-radius:4px;padding:0 
         <button data-act="exitfs">Salir ✕</button>
       </div>
     </div>
+    <div class="annfs">📢 <span data-anntext></span></div>
   </div>
   <p class="kbd">Atajos: <kbd>F</kbd> pantalla completa · <kbd>Espacio</kbd> pausar/reanudar · <kbd>E</kbd> exposición · <kbd>R</kbd> retroalimentación · <kbd>→</kbd>/<kbd>←</kbd> siguiente/anterior grupo. (Si haces clic dentro de la presentación, los atajos no funcionan hasta que hagas clic fuera de ella.)</p>
 </div>
@@ -227,9 +266,9 @@ function renderOrder(stagger){
     li.draggable=true; li.dataset.i=i;
     li.className=(n===st.cur?'cur ':'')+(st.done.includes(n)?'done ':'')+(stagger?'anim':'');
     li.style.animationDelay=stagger?(i*90)+'ms':'0ms';
-    li.innerHTML=`<span class="pos">${i+1}.</span><span class="g">Grupo ${n}</span><span class="t" title="${esc(g.tema)}">${esc(g.tema)}</span>
+    li.innerHTML=`<input type="checkbox" data-chk="${n}" ${st.done.includes(n)?'checked':''} title="Ya presentó (no entra en la rifa)"><span class="pos">${i+1}.</span><span class="g">Grupo ${n}</span><span class="t" title="${esc(g.tema)}">${esc(g.tema)}</span>
       <button class="mini" data-up="${i}" title="Subir">▲</button><button class="mini" data-down="${i}" title="Bajar">▼</button>`;
-    li.addEventListener('click',e=>{ if(e.target.closest('button'))return; select(n); });
+    li.addEventListener('click',e=>{ if(e.target.closest('button,input'))return; select(n); });
     li.addEventListener('dragstart',()=>{dragFrom=i});
     li.addEventListener('dragover',e=>{e.preventDefault();li.classList.add('over')});
     li.addEventListener('dragleave',()=>li.classList.remove('over'));
@@ -241,6 +280,11 @@ function move(from,to){
   if(from===null||to<0||to>=st.order.length||from===to){renderOrder();return}
   const [x]=st.order.splice(from,1); st.order.splice(to,0,x); changed();
 }
+$('#orderList').addEventListener('change',e=>{
+  const c=e.target.closest('[data-chk]'); if(!c)return; const n=+c.dataset.chk;
+  st.done=c.checked?[...new Set([...st.done,n])]:st.done.filter(x=>x!==n); changed(); updRaffleHint();
+});
+function updRaffleHint(){const k=G.length-st.done.length;$('#raffleBtn').textContent=`🔀 Rifar orden (${k} grupo${k===1?'':'s'} sin marcar)`}
 $('#orderList').addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b)return;
   if(b.dataset.up!==undefined){const i=+b.dataset.up;move(i,i-1)}
@@ -255,22 +299,23 @@ $('#applyManual').onclick=()=>{
 $('#manualOrder').addEventListener('keydown',e=>{if(e.key==='Enter')$('#applyManual').click()});
 $('#resetOrder').onclick=()=>{st.order=G.map(g=>g.n);st.cur=1;changed(true);raffleMsg('Orden 1 → 13')};
 function raffleMsg(t){$('#raffleBox').innerHTML=`<div class="small">${t}</div><div class="big">Grupo ${st.order[0]}</div><div class="small">abre la jornada</div>`}
-$('#clearDone').onclick=()=>{st.done=[];changed()};
+$('#clearDone').onclick=()=>{st.done=[];changed();updRaffleHint()};
 
 /* ---------- Rifa ---------- */
 function rnd(n){const a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n}
 function shuffled(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
 $('#raffleBtn').onclick=()=>{
-  if(st.done.length&&!confirm('Ya hay grupos marcados como presentados. ¿Rifar de nuevo el orden de todos?'))return;
+  const pool=st.order.filter(n=>!st.done.includes(n));
+  if(!pool.length){alert('Todos los grupos están marcados: no hay nadie para rifar.');return}
   const btn=$('#raffleBtn'), box=$('#raffleBox'); btn.disabled=true;
-  const res=shuffled(G.map(g=>g.n)); let t=0;
+  const res=shuffled(pool); let t=0;
   const spin=setInterval(()=>{
-    box.innerHTML=`<div class="big">Grupo ${G[rnd(G.length)].n}</div><div class="small">Sorteando…</div>`;
+    box.innerHTML=`<div class="big">Grupo ${pool[rnd(pool.length)]}</div><div class="small">Sorteando entre ${pool.length} grupos…</div>`;
     if((t+=70)>=1800){
       clearInterval(spin);
-      st.order=res; st.cur=res[0]; st.done=[]; changed(true);
-      box.innerHTML=`<div class="small">Abre la jornada</div><div class="big">Grupo ${res[0]}</div><div class="small">${esc(byN[res[0]].tema)}</div>`;
-      btn.disabled=false; beep(880,.15);
+      st.order=[...st.order.filter(n=>st.done.includes(n)),...res]; st.cur=res[0]; changed(true);
+      box.innerHTML=`<div class="small">Sigue</div><div class="big">Grupo ${res[0]}</div><div class="small">${esc(byN[res[0]].tema)}</div>`;
+      btn.disabled=false; updRaffleHint(); beep(880,.15);
     }
   },70);
 };
@@ -385,6 +430,29 @@ document.addEventListener('keydown',e=>{
   else if(e.key==='ArrowLeft')step(-1);
 });
 
-changed(); renderT();
+/* ---------- Reloj ---------- */
+function tickClock(){
+  const d=new Date();
+  const h=d.toLocaleTimeString('es-CO',{hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true});
+  $$('[data-clock]').forEach(el=>el.textContent=h);
+  $$('[data-date]').forEach(el=>el.textContent=d.toLocaleDateString('es-CO',{weekday:'long',day:'numeric',month:'long'}));
+}
+function applyClock(){document.body.classList.toggle('noclock',!!st.noclock);$('#clockBtn').textContent=st.noclock?'🕒 Mostrar reloj':'🕒 Ocultar reloj'}
+ACT.clockToggle=()=>{st.noclock=!st.noclock;save();applyClock()};
+setInterval(tickClock,1000); tickClock(); applyClock();
+
+/* ---------- Anuncios ---------- */
+function applyAnn(){
+  const t=(st.ann||'').trim();
+  document.body.classList.toggle('hasann',!!t);
+  $$('[data-anntext]').forEach(el=>el.textContent=t);
+}
+ACT.annShow=()=>{st.ann=$('#annInput').value;save();applyAnn()};
+ACT.annHide=()=>{st.ann='';save();applyAnn()};
+$('#annInput').value=st.ann||'';
+$('#annInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();ACT.annShow()}});
+applyAnn();
+
+changed(); renderT(); updRaffleHint();
 </script>
 </body></html>
