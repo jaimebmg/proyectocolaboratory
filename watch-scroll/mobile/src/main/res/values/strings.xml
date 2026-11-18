@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Watch Scroll</string>
+    <string name="service_description">Permite que tu reloj haga scroll (deslizar arriba/abajo) en el teléfono. No lee ni almacena el contenido de la pantalla.</string>
+    <string name="open_settings">Abrir ajustes de accesibilidad</string>
+    <string name="status_on">Servicio ACTIVO. Usa tu reloj para hacer scroll.</string>
+    <string name="status_off">Servicio inactivo. Actívalo en Accesibilidad > Apps instaladas > Watch Scroll.</string>
+</resources>
