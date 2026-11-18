@@ -1,14 +1,12 @@
 package com.example.watchscroll
 
 import android.os.Bundle
-import android.view.InputDevice
 import android.view.MotionEvent
 import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.InputDeviceCompat
 import androidx.core.view.MotionEventCompat
-import androidx.core.view.ViewConfigurationCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.wearable.Wearable
 import kotlinx.coroutines.launch
