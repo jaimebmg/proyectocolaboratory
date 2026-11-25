@@ -2,15 +2,22 @@
 // Unidades: metros. Origen: esquina noroeste (junto al árbol de Navidad) a nivel del piso.
 // x → este (muro del mapa), z → sur (hacia la puerta de entrada), y → arriba.
 // Muro norte: ventanal. Muro oeste: mueble del TV, pasillo, espejo del comedor.
+// Los diseños con escritorio reutilizan el escritorio organizado del cuarto (src/room.js).
+
+import { defaultItems as roomItems } from './room.js';
 
 export const ROOM = { W: 3.5, D: 8.0, H: 2.4 };
 const { W, D, H } = ROOM;
 
-export const DESIGNS = { actual: 'Sala comedor actual' };
+export const DESIGNS = {
+  actual: 'Sala comedor actual',
+  ventanal: 'Opción A: escritorio en el ventanal (recomendada)',
+  muro: 'Opción B: escritorio en el muro del cuadro (sin corral)',
+};
 export const CONFIG = {
   designKey: 'sala3d-design',
   defaultDesign: 'actual',
-  storeKey: (d) => 'sala3d-v1-' + d,
+  storeKey: (d) => 'sala3d-v2-' + d,
   file: 'sala',
   camPos: [W + 3.6, 7.4, D + 3.2],
   topH: 14.5,
@@ -65,11 +72,10 @@ function cushion(x, z, rotY = 0) {
 const T = 0.08;
 const sill = 0.82, head = 2.2;      // ventanal
 const hallZ0 = 3.65, hallZ1 = 4.6;  // vano del pasillo (muro oeste)
-const kitZ0 = 7.0, kitZ1 = 7.8;     // puerta de madera (muro oeste)
 const doorX0 = 2.35, doorX1 = 3.25; // puerta de entrada (muro sur)
 const openH = 2.1;
 
-export function defaultItems() {
+export function defaultItems(design = 'actual') {
   n = 0;
   const items = [];
 
@@ -88,7 +94,7 @@ export function defaultItems() {
     seg(0, 0.9, 0, sill), seg(0, 0.9, head, H),
     box([0.01, head - sill, 0.9], [-T / 2, (sill + head) / 2, zc(0.45)], C.glass, { opacity: 0.3 }),
     seg(0.9, hallZ0, 0, H), seg(hallZ0, hallZ1, openH, H),
-    seg(hallZ1, kitZ0, 0, H), seg(kitZ0, kitZ1, openH, H), seg(kitZ1, D, 0, H),
+    seg(hallZ1, D, 0, H),
   ], { structure: true, hideFrom: [-1, 0] }));
 
   items.push(item('Muro este (mapa)', [W, 0, D / 2], [box([T, H, D], [T / 2, H / 2, 0], C.wall)], { structure: true, hideFrom: [1, 0] }));
@@ -108,11 +114,6 @@ export function defaultItems() {
     box([0.05, 0.22, 0.03], [-(doorX1 - doorX0) / 2 + 0.12, 1.0, -0.035], C.black),
     box([0.14, 0.025, 0.03], [-(doorX1 - doorX0) / 2 + 0.17, 0.95, -0.05], C.black),
   ], { hideFrom: [0, 1] }));
-
-  items.push(item('Puerta de madera (cocina)', [0.03, 0, (kitZ0 + kitZ1) / 2], [
-    box([0.045, openH - 0.02, kitZ1 - kitZ0], [0, (openH - 0.02) / 2, 0], '#b98d63'),
-    cyl(0.03, 0.12, [0.06, 1.0, (kitZ1 - kitZ0) / 2 - 0.08], C.steel, { rot: [0, 0, PI / 2] }),
-  ], { hideFrom: [-1, 0] }));
 
   // Inicio del pasillo hacia las habitaciones
   const hl = 1.8, hz = (hallZ0 + hallZ1) / 2;
@@ -352,5 +353,64 @@ export function defaultItems() {
     box([0.03, 0.03, 0.2], [0, 0.04, -0.15], '#151515', { rot: [0, 0.6, 0] }),
   ], { rotY: 0.4 }));
 
+  return design === 'actual' ? items : withDesk(items, design);
+}
+
+// ---------- escritorio traído del cuarto ----------
+const DESK_SET = [
+  'Escritorio', 'Cajonera 1', 'Cajonera 2', 'Organizador de malla', 'Monitor ultrawide', 'Monitor secundario',
+  'Tablet en brazo', 'Teclado', 'Mouse', 'Botella morada', 'Laptop en soporte', 'Impresora', 'Teléfono',
+  'Portarretratos alineados', 'Bandeja de documentos', 'Portalápices', 'Caja organizadora de cables', 'Silla negra', 'Silla gris',
+];
+
+// Toma el escritorio organizado del cuarto (coordenadas del cuarto: escritorio de x 0 a 2.52 contra la pared z = 0)
+// y lo lleva a la sala: punto (x, z) → origen + giro rot.
+function deskSet(origin, rot) {
+  const src = roomItems('ordenado');
+  const c = Math.cos(rot), s = Math.sin(rot);
+  return DESK_SET.map((name, i) => {
+    const it = src.find((o) => o.name === name);
+    if (!it) throw new Error('Falta en el cuarto: ' + name);
+    const [x, y, z] = it.pos;
+    return {
+      ...it, id: 'd' + (i + 1), name: name.startsWith('Silla') ? name + ' (escritorio)' : name,
+      pos: [origin[0] + x * c + z * s, y, origin[1] - x * s + z * c].map((v) => Math.round(v * 1000) / 1000),
+      rotY: (it.rotY || 0) + rot,
+    };
+  });
+}
+
+function withDesk(items, design) {
+  const get = (name) => {
+    const it = items.find((o) => o.name === name);
+    if (!it) throw new Error('Falta en la sala: ' + name);
+    return it;
+  };
+  const drop = (...names) => names.forEach((nm) => items.splice(items.indexOf(get(nm)), 1));
+  const move = (name, x, z, rotY) => { const it = get(name); it.pos = [x, it.pos[1], z]; if (rotY != null) it.rotY = rotY; };
+  const shiftZ = (dz, ...names) => names.forEach((nm) => { get(nm).pos[2] += dz; });
+
+  if (design === 'ventanal') {
+    // Escritorio bajo el ventanal, entre el árbol y el muro del mapa (mismo frente que en el cuarto).
+    drop('Sillón gris (ventana)', 'Silla Acapulco', 'Carrito montable');
+    // Sofá, tapete, mesa de centro y sillón rosado bajan 0,5 m para dejar sitio a las sillas de oficina.
+    shiftZ(0.5, 'Sofá gris (bajo el mapa)', 'Tapete', 'Mesa de centro', 'Gato');
+    shiftZ(0.4, 'Mapa mundi de madera');
+    move('Sillón rosado', 1.4, 3.75);
+    move('Repisa de cubos (libros y adornos)', W - 0.17, 4.12);
+    move('Gimnasio del gato', 3.24, 5.05);
+    const desk = deskSet([0.98, 0], 0);
+    desk.find((o) => o.name === 'Monitor secundario').pos[0] -= 0.15;
+    items.push(...desk);
+  } else {
+    // Escritorio contra el muro este, bajo el cuadro, mirando hacia el comedor.
+    drop('Corral de juego', 'Arco de fútbol con balones', 'Carrito montable');
+    move('Gimnasio del gato', 3.0, 0.32, PI / 2);
+    move('Silla Acapulco', 2.2, 0.68);
+    move('Sillón gris (ventana)', 1.3, 0.5);
+    // Comedor 25 cm más cerca del espejo para que quede paso entre las sillas.
+    for (const nm of ['Mesa de comedor (vidrio)', 'Objetos sobre el comedor', 'Silla comedor 1', 'Silla comedor 2', 'Silla comedor 3', 'Silla comedor 4']) get(nm).pos[0] -= 0.25;
+    items.push(...deskSet([W, 4.25], -PI / 2));
+  }
   return items;
 }
