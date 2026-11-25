@@ -70,6 +70,15 @@ const T = 0.08; // grosor de muros
 const sill = 0.86, head = 2.12; // antepecho y dintel de la ventana
 const winW = 1.0; // tramo de ventana sobre el muro oeste (desde la esquina)
 
+export const CONFIG = {
+  designKey: 'cuarto3d-design',
+  defaultDesign: 'joaquin',
+  storeKey: (d) => (d === 'actual' ? 'cuarto3d-v2' : 'cuarto3d-v2-' + d),
+  file: 'cuarto',
+  camPos: [2.3, 4.6, 7.0],
+  topH: 7.5,
+};
+
 export const DESIGNS = { joaquin: 'Habitación de Joaquín (Montessori)', actual: 'Cuarto actual (oficina + cuna)', ordenado: 'Cuarto actual con escritorio organizado' };
 
 export function defaultItems(design = 'actual') {

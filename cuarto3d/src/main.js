@@ -2,16 +2,16 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
-import { ROOM, DESIGNS, defaultItems } from './room.js';
+import { ROOM, DESIGNS, CONFIG, defaultItems } from './space.js';
 
 // Almacenamiento tolerante: en visores con iframe aislado localStorage lanza error.
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch { return null; } },
   set(k, v) { try { localStorage.setItem(k, v); } catch { /* sin persistencia */ } },
 };
-let design = store.get('cuarto3d-design');
-if (!DESIGNS[design]) design = 'joaquin';
-const storeKey = () => (design === 'actual' ? 'cuarto3d-v2' : 'cuarto3d-v2-' + design);
+let design = store.get(CONFIG.designKey);
+if (!DESIGNS[design]) design = CONFIG.defaultDesign;
+const storeKey = () => CONFIG.storeKey(design);
 const $ = (id) => document.getElementById(id);
 const view = $('view');
 
@@ -30,12 +30,13 @@ orbit.maxPolarAngle = Math.PI / 2 - 0.02;
 
 scene.add(new THREE.HemisphereLight('#ffffff', '#b9b2a8', 1.5));
 const sun = new THREE.DirectionalLight('#ffffff', 1.6);
-sun.position.set(-2.5, 6, -1.5);
+sun.target.position.set(ROOM.W / 2, 0, ROOM.D / 2);
+sun.position.copy(sun.target.position).add(new THREE.Vector3(-4, 6, -3));
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
-Object.assign(sun.shadow.camera, { left: -4, right: 4, top: 4, bottom: -4, near: 0.5, far: 15 });
+const sh = Math.max(4, Math.max(ROOM.W, ROOM.D) / 2 + 1.5);
+Object.assign(sun.shadow.camera, { left: -sh, right: sh, top: sh, bottom: -sh, near: 0.5, far: 20 });
 sun.shadow.bias = -0.0005;
-sun.target.position.set(1.5, 0, 1.5);
 scene.add(sun, sun.target);
 
 const root = new THREE.Group();
@@ -51,8 +52,8 @@ scene.add(selBox);
 
 function resetCamera(top = false) {
   const { W, D } = ROOM;
-  if (top) camera.position.set(W / 2, 7.5, D / 2 + 0.01);
-  else camera.position.set(2.3, 4.6, 7.0);
+  if (top) camera.position.set(W / 2, CONFIG.topH, D / 2 + 0.01);
+  else camera.position.set(...CONFIG.camPos);
   orbit.target.set(W / 2, top ? 0 : 0.8, D / 2 - (top ? 0 : 0.2));
   orbit.update();
 }
@@ -68,6 +69,7 @@ const geoCache = {
   box: new THREE.BoxGeometry(1, 1, 1),
   cyl: new THREE.CylinderGeometry(0.5, 0.5, 1, 32),
   sphere: new THREE.SphereGeometry(0.5, 24, 16),
+  cone: new THREE.ConeGeometry(0.5, 1, 24),
 };
 
 function buildGroup(it) {
@@ -259,7 +261,7 @@ $('pName').onchange = () => { editSelected((it) => { it.name = $('pName').value 
 const newId = () => 'u' + Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36);
 function addPrimitive(shape) {
   pushUndo();
-  const names = { box: 'Caja', cyl: 'Cilindro', sphere: 'Esfera' };
+  const names = { box: 'Caja', cyl: 'Cilindro', sphere: 'Esfera', cone: 'Cono' };
   const it = {
     id: newId(), name: names[shape] + ' nueva', pos: [ROOM.W / 2, 0, ROOM.D / 2], rotY: 0, scale: [1, 1, 1], visible: true,
     parts: [{ shape, size: [0.4, 0.4, 0.4], pos: [0, 0.2, 0], color: '#e08a3c' }],
@@ -329,7 +331,7 @@ $('bReset').onclick = () => {
   rebuildAll();
   save();
 };
-$('bJson').onclick = () => download(`cuarto-${design}.json`, JSON.stringify(items, null, 1), 'application/json');
+$('bJson').onclick = () => download(`${CONFIG.file}-${design}.json`, JSON.stringify(items, null, 1), 'application/json');
 $('fImport').onchange = async (e) => {
   const f = e.target.files[0];
   if (!f) return;
@@ -349,7 +351,7 @@ $('bGlb').onclick = () => {
   root.children.forEach((g) => { if (!g.visible && getItem(g.userData.itemId)?.visible !== false) { g.visible = true; hidden.push(g); } });
   new GLTFExporter().parse(root, (buf) => {
     hidden.forEach((g) => { g.visible = false; });
-    download(`cuarto-${design}.glb`, buf, 'model/gltf-binary');
+    download(`${CONFIG.file}-${design}.glb`, buf, 'model/gltf-binary');
   }, (err) => alert('No se pudo exportar: ' + err), { binary: true, onlyVisible: true });
 };
 
@@ -396,7 +398,7 @@ for (const [k, label] of Object.entries(DESIGNS)) dSel.add(new Option(label, k))
 dSel.value = design;
 dSel.onchange = () => {
   design = dSel.value;
-  store.set('cuarto3d-design', design);
+  store.set(CONFIG.designKey, design);
   undoStack.length = 0;
   selectedId = null;
   loadDesign();
